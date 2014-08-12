@@ -1,0 +1,212 @@
+require(PVR)
+?PVR
+require(picante)
+?picante
+require(daee)
+?daee
+X<-vegdist(matrix(sample(1:10,20,replace=TRUE),5,5))#
+Y<-vegdist(matrix(sample(1:10,30,replace=TRUE),5,6))#
+mantel(X,Y)#
+mantel.residuals(X,Y)
+data(dune)#
+pcoa.sig(dune,axis=10,dist="euclidean",n.start="NULL",iterations=1000)
+data(dune)#
+pcoa.sig(dune,axis=10,dist="euclidean",n.start=NULL,iterations=1000)
+require(daee)
+?daee
+data(mite)#
+data(mite.pcnm)#
+response<-rowSums(mite)#
+Res<-all.models(response,mite.pcnm,subset=3)
+Res
+summary(Res)
+data(flona)#
+P<-matrix.p(flona$community,flona$phylo)$matrix.P#
+res<-PCPS(P)
+res
+summary(res)#
+scores(res)
+data(flona)#
+Res<-PVR(flona$traits[,1:4],flona$phylo,VMoran=0.01)#
+Res#
+plot(Res,trait=1)
+plot(Res,2)
+plot(Res,3)
+plot(Res,4)
+plot(Res,1)
+X<-vegdist(matrix(sample(1:10,20,replace=TRUE),5,5))#
+Y<-vegdist(matrix(sample(1:10,30,replace=TRUE),5,6))#
+mantel(X,Y)#
+mantel.residuals(X,Y)
+data(dune)#
+pcoa.sig(dune,axis=10,dist="euclidean",n.start=NULL,iterations=1000)#
+## ca. 60 seconds#
+ord.dune<-pcoa.sig(dune,axis=6,dist="euclidean",n.start=11,iterations=1000)#
+## ca. 360 seconds#
+ord.dune
+summary(ord.dune)
+summary(ord.dune,n.axis=2)
+plot(ord.dune,N.axis=6)
+?all.models
+data(mite)#
+data(mite.pcnm)#
+response<-rowSums(mite)#
+Res<-all.models(response,mite.pcnm,subset=3)#
+Res
+class(Res)
+require(daee)
+?all.models
+require(sp)
+require(ape)
+require(pcpa)
+require(MASS)
+require(ggplot)
+require(gplots)
+?lowess
+?procrustes
+require(ape)
+? phylo4
+require(phylobase)
+? phylo4
+plotCI
+require(plotrix)
+?plotCI
+require(vegan)
+? ordiArgAbsorber
+require(SYNCSA)
+?syncsa
+matrix.x
+ses.mpd
+require(picante)
+?ses.mpd
+?vegdist
+distance
+?matrix.x
+decostand
+?decostand
+sweep
+?sweep
+stats
+belonging<-function (dis, standardize=TRUE){#
+	distance <- as.matrix(dist)#
+	if(standardize){#
+		distance<-distance/max(distance)	#
+	}#
+	similarity<- 1-distance#
+	stats <- 1/colSums(similarity)#
+	res <- sweep(similarity, 1, stats, "*")#
+	return(res)#
+}
+?ses.mpd
+?decostand
+?syncsa
+require(SYCNSA)
+require(SYNCSA)
+?matrix.x
+belonging<-function (dis, standardize=TRUE){#
+	distance <- as.matrix(dist)#
+	if(standardize){#
+		distance<-distance/max(distance)	#
+	}#
+	similarity<- 1-distance#
+	stats <- 1/colSums(similarity)#
+	res <- sweep(similarity, 1, stats, "*")#
+	return(res)#
+}
+data(flona)
+matrix.x(flona$community,flona$traits,scale=TRUE)$matri.u
+matrix.x(flona$community,flona$traits,scale=TRUE)$matrix.u
+belonging(vegdist(flona$traits,"gower"),FALSE)
+vegdist(flona$traits,"gower")
+belonging
+belonging<-function (dis, standardize=TRUE){#
+	distance <- as.matrix(dis)#
+	if(standardize){#
+		distance<-distance/max(distance)	#
+	}#
+	similarity<- 1-distance#
+	stats <- 1/colSums(similarity)#
+	res <- sweep(similarity, 1, stats, "*")#
+	return(res)#
+}
+belonging(vegdist(flona$traits,"gower"),FALSE)
+matrix.x(flona$community,flona$traits,scale=TRUE)$matrix.u
+matrix.x(flona$community,flona$traits,scale=TRUE)$matrix.u==belonging(vegdist(flona$traits,"gower"),FALSE)
+matrix.x
+?matrix.x
+require(vegan)
+?ordispider
+?raoD
+require(picante)
+?raoD
+?vegdist
+?syncsa
+require(SYNCSA)
+?syncsa
+require(SYNCSA)
+?belonging
+data(flona)#
+belonging(flona$phylo)
+self.belonging(flona$phylo)
+require(PCPS)
+self.belonging(flona$phylo)
+self.belonging<-function (dis,standardize=TRUE){#
+	diag.matrix<-diag(belonging(dis,standardize=standardize))#
+	return(self.belonging=diag.matrix)#
+}
+require(PCPS)
+?self.belongin
+?self.belonging
+data(flona)#
+self.belonging(flona$dist.spp)
+data(flona)
+flona
+flona$dist.spp
+ls(flona)
+require(SYNCSA)
+rao.diverity
+?syncsa
+args(plot)
+?scores
+require(PCPS)
+?pcps
+data(flona)#
+res<-pcoa.sig(flona$community,axis=6,dist="euclidean",n.start=11,iterations=100)#
+res#
+summary(res)
+require(PCPS)
+data(flona)#
+res<-pcoa.sig(flona$community,axis=6,dist="euclidean",n.start=11,iterations=100)#
+res#
+summary(res)
+dim(flona$community)
+res<-pcoa.sig(flona$community,axis=6,dist="euclidean",n.start=20,iterations=100)#
+res#
+summary(res)
+res<-pcoa.sig(flona$community,axis=6,dist="bray",n.start=20,iterations=100)
+res
+res<-pcoa.sig(flona$community,axis=6,dist="bray",iterations=100)
+res
+summary(res)
+summary
+summary(res)
+require(PCPS)
+?matrix.p
+require(PCPS)
+?pcps
+tree<-read.tree("tree.txt")
+dist_phylo<-cophenetic(tree)
+comm<-read.table("w.txt",header=T)
+require(ape)#
+require(SYNCSA)#
+require(phylobase)#
+require(picante)#
+require(plotrix)
+tree<-read.tree("tree.txt")
+dist_phylo<-cophenetic(tree)
+comm<-read.table("w.txt",header=T)
+require(PCPS)
+?pcoa.sig
+require(PCPS)
+pcps
+?syncsa

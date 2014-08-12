@@ -1,0 +1,1324 @@
+require(vegan)
+?vegdist
+CITATION(vegan)
+citation(vegan)
+citation()
+require(ape)
+citation(ape)
+citation("ape")
+citation("vegan")
+require(SYCNSA)
+require(SYNCSA)
+?syncsa
+require(PCPS)
+define.clade
+?define.clade
+define.clade(rtree(12),5)
+define.clade(makeNodeLabel(rtree(12)),5)
+define.clade(makeNodeLabel(rtree(12)),10)
+define.clade(makeNodeLabel(rtree(12)),010)
+define.clade(makeNodeLabel(rtree(12)),0.10)
+define.clade(makeNodeLabel(rtree(12)),1)
+define.clade(makeNodeLabel(rtree(12)),0)
+?define.clade
+require(PCPS)
+?pcps
+data(flona)#
+pcps.glm.null.model(flona$community,flona$phylo,flona$environment,#
+	formula="pcps.1~alt",runs=100)
+?procrustes
+data(varespec)
+vare.dist <- vegdist(wisconsin(varespec))
+mds.null <- monoMDS(vare.dist, y = cmdscale(vare.dist))
+mds.alt <- monoMDS(vare.dist)
+vare.proc <- procrustes(mds.alt, mds.null)
+mds.null
+?scores
+vare.proc <- procrustes(mds.alt, mds.null, choices=1)
+require(vegan)
+data(varespec)#
+vare.dist <- vegdist(wisconsin(varespec))#
+mds.null <- monoMDS(vare.dist, y = cmdscale(vare.dist))#
+mds.alt <- monoMDS(vare.dist)
+vare.proc <- procrustes(mds.alt, mds.null, choices=1)
+vare.proc
+vare.proc <- procrustes(mds.alt, mds.null)
+vare.proc
+pcps.glm.null.model<-function(comm, dist.spp, envir, method = "bray", squareroot = TRUE, formula,runs=999,AsFactors=NULL){#
+	dis<-dist.spp#
+	envir<-as.data.frame(envir)#
+	if(!is.null(AsFactors)){#
+		for(i in AsFactors){#
+			envir[,i]<-as.factor(envir[,i])#
+		}#
+	}#
+	envir_class<-matrix(NA,dim(envir)[2],1)#
+	rownames(envir_class)=colnames(envir)#
+	colnames(envir_class)=c("Class")#
+	for(j in 1:dim(envir)[2]){#
+		envir_class[j,1]<-class(envir[,j])	#
+	}#
+	m_p_obs<-matrix.p(comm,dis)$matrix.P#
+	ord<-pcps(m_p_obs, method = method, squareroot = squareroot)#
+	vectors<-ord$vectors#
+	colnames(vectors)=NULL#
+	colnames(vectors)=colnames(vectors,do.NULL=FALSE,prefix="pcps.")#
+	data_obs<-as.data.frame(cbind(vectors,envir))#
+	mod_obs<-glm(formula,data=data_obs)#
+	f_obs<-summary.lm(mod_obs)$fstatistic[1]#
+	y_name<-substr(formula,1,gregexpr("~",formula)[[1]][1]-1)#
+	res_F_null<-matrix(NA,runs,1)#
+		for(k in 1:runs){#
+			dist_null<-taxaShuffle(dis)#
+			match.names <- match(colnames(comm), colnames(dist_null))#
+			m_p_null<-matrix.p(comm,as.matrix(dist_null[match.names, match.names]))$matrix.P#
+			dist_p_null <- vegdist(m_p_null, method = method)#
+		    if (squareroot == TRUE) {#
+    		    dist_p_null <- sqrt(dist_p_null)#
+    		}#
+			ord_null<-pcoa(dist_p_null)#
+			vectors_null<-ord_null$vectors#
+			colnames(vectors_null)=NULL#
+			colnames(vectors_null)=colnames(vectors_null,do.NULL=FALSE,prefix="pcps.")#
+			res_pro<-procrustes(vectors[,y_name],vectors_null[,y_name],symmetric = TRUE, choices=1)#
+			vector_null<-fitted(res_pro)#
+			colnames(vector_null)=y_name#
+			data_null<-as.data.frame(cbind(vector_null,envir))#
+			mod_null<-glm(formula,data=data_null)#
+			res_F_null[k,]<-summary.lm(mod_null)$fstatistic[1]#
+		}#
+	p<-(sum(ifelse(res_F_null>=f_obs,1,0))+1)/(runs+1)#
+return(list(Model=mod_obs, Envir_class=envir_class,Fomula=formula, F_obs=f_obs,p=p))#
+}
+require(SYNCSA)
+data(flona)
+pcps.glm.null.model(flona$community,flona$phylo,flona$environment,#
+	formula="pcps.1~alt",runs=100)
+pcps<-function(P,method="bray",squareroot=TRUE){#
+	P.dist<-vegdist(P,method=method)#
+	if(squareroot==TRUE){#
+		P.dist<-sqrt(P.dist)#
+	}#
+	ordi.P<-wcmdscale(P.dist,eig=TRUE)#
+	vectors<-ordi.P$points#
+	colnames(vectors)<-NULL#
+	colnames(vectors)<-colnames(vectors,do.NULL=FALSE,prefix="pcps.")#
+	values<-ordi.P$eig[which((ordi.P$eig>=0)==TRUE)]#
+	if(length(unique(ordi.P$eig<0))>1){#
+		warning("Warning: Negative eigenvalues are present in the decomposition result, but only positive eigenvalues were considered",call.=FALSE)#
+	}#
+	relative<-values/sum(values)#
+	cumulative<-as.vector(rep(NA,length(values)))#
+	for (i in 1:length(values)){#
+		cumulative[i]<-sum((values/sum(values))[1:i])#
+	}#
+	Values<-cbind(values,relative,cumulative)#
+	colnames(Values)=c("Eigenvalues","Relative_eig","Cumul_eig")#
+	rownames(Values)=1:length(values)#
+	n.col<-dim(P)[2]#
+	n.axis<-dim(vectors)[2]#
+	correlations<-matrix(NA,nrow=n.col,ncol=n.axis)#
+	for (i in 1:n.col){#
+		for (j in 1:n.axis){#
+			correlations[i,j]<-cor(P[,i],vectors[,j])#
+		}#
+	}		#
+	colnames(correlations)<-colnames(vectors)#
+	rownames(correlations)<-colnames(P,do.NULL=FALSE,prefix="Uni.")#
+	Res<-list(call= match.call(), values=Values, vectors=vectors, correlations=correlations)#
+	class(Res) <- "pcps"#
+	return(Res)#
+}
+pcps.glm.null.model(flona$community,flona$phylo,flona$environment,#
+	formula="pcps.1~alt",runs=100)
+require(picante)
+pcps.glm.null.model(flona$community,flona$phylo,flona$environment,#
+	formula="pcps.1~alt",runs=100)
+AAA<-pcps.glm.null.model(flona$community,flona$phylo,flona$environment,
+AAA
+AAA<-pcps.glm.null.model(flona$community,flona$phylo,flona$environment,#
+	formula="pcps.1~alt",runs=100)#
+	AAA
+rm(pcps.glm.null.model)
+require(PCPS)
+BBB<-pcps.glm.null.model(flona$community,flona$phylo,flona$environment,#
+	formula="pcps.1~alt",runs=100)
+AAA
+BBB
+AAA
+BBB
+pcps.glm.null.model<-function(comm, dist.spp, envir, method = "bray", squareroot = TRUE, formula,runs=999,AsFactors=NULL){#
+	dis<-dist.spp#
+	envir<-as.data.frame(envir)#
+	if(!is.null(AsFactors)){#
+		for(i in AsFactors){#
+			envir[,i]<-as.factor(envir[,i])#
+		}#
+	}#
+	envir_class<-matrix(NA,dim(envir)[2],1)#
+	rownames(envir_class)=colnames(envir)#
+	colnames(envir_class)=c("Class")#
+	for(j in 1:dim(envir)[2]){#
+		envir_class[j,1]<-class(envir[,j])	#
+	}#
+	m_p_obs<-matrix.p(comm,dis)$matrix.P#
+	ord<-pcps(m_p_obs, method = method, squareroot = squareroot)#
+	vectors<-ord$vectors#
+	colnames(vectors)=NULL#
+	colnames(vectors)=colnames(vectors,do.NULL=FALSE,prefix="pcps.")#
+	data_obs<-as.data.frame(cbind(vectors,envir))#
+	mod_obs<-glm(formula,data=data_obs)#
+	f_obs<-summary.lm(mod_obs)$fstatistic[1]#
+	y_name<-substr(formula,1,gregexpr("~",formula)[[1]][1]-1)#
+	res_F_null<-matrix(NA,runs,1)#
+		for(k in 1:runs){#
+			dist_null<-taxaShuffle(dis)#
+			match.names <- match(colnames(comm), colnames(dist_null))#
+			m_p_null<-matrix.p(comm,as.matrix(dist_null[match.names, match.names]))$matrix.P#
+			dist_p_null <- vegdist(m_p_null, method = method)#
+		    if (squareroot == TRUE) {#
+    		    dist_p_null <- sqrt(dist_p_null)#
+    		}#
+			ord_null<-pcoa(dist_p_null)#
+			vectors_null<-ord_null$vectors#
+			colnames(vectors_null)=NULL#
+			colnames(vectors_null)=colnames(vectors_null,do.NULL=FALSE,prefix="pcps.")#
+			res_pro<-procrustes(vectors[,y_name],vectors_null[,y_name],symmetric = TRUE, choices=1)#
+			print(y_name)#
+			vector_null<-fitted(res_pro)#
+			colnames(vector_null)=y_name#
+			data_null<-as.data.frame(cbind(vector_null,envir))#
+			mod_null<-glm(formula,data=data_null)#
+			res_F_null[k,]<-summary.lm(mod_null)$fstatistic[1]#
+		}#
+	p<-(sum(ifelse(res_F_null>=f_obs,1,0))+1)/(runs+1)#
+return(list(Model=mod_obs, Envir_class=envir_class,Fomula=formula, F_obs=f_obs,p=p))#
+}
+CCC<-pcps.glm.null.model(flona$community,flona$phylo,flona$environment,#
+	formula="pcps.1~alt",runs=100)
+pcps.glm.null.model<-function(comm, dist.spp, envir, method = "bray", squareroot = TRUE, formula,runs=999,AsFactors=NULL){#
+	dis<-dist.spp#
+	envir<-as.data.frame(envir)#
+	if(!is.null(AsFactors)){#
+		for(i in AsFactors){#
+			envir[,i]<-as.factor(envir[,i])#
+		}#
+	}#
+	envir_class<-matrix(NA,dim(envir)[2],1)#
+	rownames(envir_class)=colnames(envir)#
+	colnames(envir_class)=c("Class")#
+	for(j in 1:dim(envir)[2]){#
+		envir_class[j,1]<-class(envir[,j])	#
+	}#
+	m_p_obs<-matrix.p(comm,dis)$matrix.P#
+	ord<-pcps(m_p_obs, method = method, squareroot = squareroot)#
+	vectors<-ord$vectors#
+	colnames(vectors)=NULL#
+	colnames(vectors)=colnames(vectors,do.NULL=FALSE,prefix="pcps.")#
+	data_obs<-as.data.frame(cbind(vectors,envir))#
+	mod_obs<-glm(formula,data=data_obs)#
+	f_obs<-summary.lm(mod_obs)$fstatistic[1]#
+	y_name<-substr(formula,1,gregexpr("~",formula)[[1]][1]-1)#
+	res_F_null<-matrix(NA,runs,1)#
+		for(k in 1:runs){#
+			dist_null<-taxaShuffle(dis)#
+			match.names <- match(colnames(comm), colnames(dist_null))#
+			m_p_null<-matrix.p(comm,as.matrix(dist_null[match.names, match.names]))$matrix.P#
+			dist_p_null <- vegdist(m_p_null, method = method)#
+		    if (squareroot == TRUE) {#
+    		    dist_p_null <- sqrt(dist_p_null)#
+    		}#
+			ord_null<-pcoa(dist_p_null)#
+			vectors_null<-ord_null$vectors#
+			colnames(vectors_null)=NULL#
+			colnames(vectors_null)=colnames(vectors_null,do.NULL=FALSE,prefix="pcps.")#
+			res_pro<-procrustes(vectors[,y_name],vectors_null[,y_name],symmetric = TRUE)#
+			print(y_name)#
+			vector_null<-fitted(res_pro)#
+			colnames(vector_null)=y_name#
+			data_null<-as.data.frame(cbind(vector_null,envir))#
+			mod_null<-glm(formula,data=data_null)#
+			res_F_null[k,]<-summary.lm(mod_null)$fstatistic[1]#
+		}#
+	p<-(sum(ifelse(res_F_null>=f_obs,1,0))+1)/(runs+1)#
+return(list(Model=mod_obs, Envir_class=envir_class,Fomula=formula, F_obs=f_obs,p=p))#
+}
+CCC<-pcps.glm.null.model(flona$community,flona$phylo,flona$environment,#
+	formula="pcps.1~alt",runs=100)
+require(vegan)
+?procrustes
+data(varespec)
+vare.dist <- vegdist(wisconsin(varespec))
+mds.null <- monoMDS(vare.dist, y = cmdscale(vare.dist))
+mds.alt <- monoMDS(vare.dist)
+scores(mds.alt)
+scores(mds.alt,choese=1)
+scores(mds.alt, choices=1)
+scores(mds.alt, choices=2)
+scores(mds.alt, choices=1:2)
+require(PCPS)
+pcoa.sig
+pcoa.sig<-function (data, dist = "gower", correction = "none", squareroot = FALSE, #
+    n.start = NULL, axis = 6, iterations = 1000) #
+{#
+    data <- as.matrix(data)#
+    colnames(data) <- colnames(data, do.NULL = FALSE, prefix = "V.")#
+    rownames(data) <- rownames(data, do.NULL = FALSE, prefix = "")#
+    n.row <- dim(data)[1]#
+    n.col <- dim(data)[2]#
+    n.start <- n.start#
+    if (is.null(n.start)) {#
+        n.start <- n.row#
+    }#
+    if (n.start > n.row) {#
+        stop("\n n.start must be lower than the number of sampling units\n")#
+    }#
+    table.row <- (n.row - n.start) + 1#
+    dist.ref <- vegdist(data, method = dist)#
+    if (squareroot == TRUE) {#
+        dist.ref <- sqrt(dist.ref)#
+    }#
+    pco.ref <- pcoa(dist.ref, correction = correction)#
+    n.axis.ref <- dim(pco.ref$vectors)[2]#
+    if (axis > n.axis.ref) {#
+        stop("\n axis must be lower than the number of axis with positive eigenvalues in reference ordination\n")#
+    }#
+    if (axis > n.start) {#
+        stop("\n n.start must be higher than the number of axis monitored\n")#
+    }#
+    correlations <- matrix(NA, nrow = n.col, ncol = n.axis.ref)#
+    for (i in 1:n.col) {#
+        for (j in 1:n.axis.ref) {#
+            correlations[i, j] <- cor(data[, i], pco.ref$vectors[, #
+                j])#
+        }#
+    }#
+    colnames(correlations) <- colnames(pco.ref$vectors)#
+    rownames(correlations) <- colnames(data, do.NULL = FALSE, #
+        prefix = "Uni.")#
+    mean.cor.null <- matrix(NA, nrow = table.row, ncol = axis)#
+    mean.cor.bootstrap <- matrix(NA, nrow = table.row, ncol = axis)#
+    cumulative.frequency <- matrix(NA, nrow = table.row, ncol = axis)#
+    probabilities <- matrix(NA, nrow = table.row, ncol = axis)#
+    n.permut <- matrix(NA, nrow = table.row, ncol = axis)#
+    n.randon <- matrix(NA, nrow = table.row, ncol = axis)#
+    colnames(mean.cor.null) <- colnames(mean.cor.null, do.NULL = FALSE, #
+        prefix = "Axis.")#
+    colnames(mean.cor.bootstrap) <- colnames(mean.cor.bootstrap, #
+        do.NULL = FALSE, prefix = "Axis.")#
+    colnames(cumulative.frequency) <- colnames(cumulative.frequency, #
+        do.NULL = FALSE, prefix = "Axis.")#
+    colnames(probabilities) <- colnames(probabilities, do.NULL = FALSE, #
+        prefix = "Axis.")#
+    colnames(n.permut) <- colnames(n.permut, do.NULL = FALSE, #
+        prefix = "Axis.")#
+    colnames(n.randon) <- colnames(n.randon, do.NULL = FALSE, #
+        prefix = "Axis.")#
+    rownames(mean.cor.null) <- as.vector(n.start:n.row)#
+    rownames(mean.cor.bootstrap) <- as.vector(n.start:n.row)#
+    rownames(cumulative.frequency) <- as.vector(n.start:n.row)#
+    rownames(probabilities) <- as.vector(n.start:n.row)#
+    rownames(n.permut) <- as.vector(n.start:n.row)#
+    rownames(n.randon) <- as.vector(n.start:n.row)#
+    for (r in n.start:n.row) {#
+        matrix.permut <- matrix(NA, nrow = iterations, ncol = axis)#
+        matrix.1 <- matrix(NA, nrow = iterations, ncol = axis)#
+        for (i in 1:iterations) {#
+            sam <- sample(1:n.row, r, replace = TRUE)#
+            permut <- data[sam, 1:n.col]#
+            dist.permut <- vegdist(permut, method = dist)#
+            if (squareroot == TRUE) {#
+                dist.permut <- sqrt(dist.permut)#
+            }#
+            vectors.permut <- pcoa(dist.permut, correction = correction)$vectors#
+            eixo <- axis#
+            if (!(dim(vectors.permut)[2] >= axis)) {#
+                n.number <- abs(dim(vectors.permut)[2] - axis)#
+                eixo <- dim(vectors.permut)[2]#
+                vectors.permut <- cbind(vectors.permut, matrix(rep(0, #
+                  dim(vectors.permut)[1] * n.number), nrow = dim(vectors.permut)[1], #
+                  ncol = n.number))#
+            }#
+            matrix.1[i, c(1:eixo)] <- 1#
+            for (l in 1:axis) {#
+                procrustes.scor <- procrustes(pco.ref$vectors[sam, #
+                  1:l], vectors.permut[, 1:l])#
+                  print(1:l)#
+                fit.procrustes <- fitted(procrustes.scor, truemean = TRUE)#
+                matrix.permut[i, l] <- as.numeric(cor(pco.ref$vectors[sam, #
+                  l], fit.procrustes[, l]))#
+            }#
+        }#
+        matrix.randon <- matrix(NA, nrow = iterations, ncol = axis)#
+        matrix.2 <- matrix(NA, nrow = iterations, ncol = axis)#
+        for (j in 1:iterations) {#
+            randon <- t(randomizeMatrix(t(data), null.model = "richness"))#
+            dist.random.ref <- vegdist(randon, method = dist)#
+            if (squareroot == TRUE) {#
+                dist.random.ref <- sqrt(dist.random.ref)#
+            }#
+            pco.randon.ref <- pcoa(dist.random.ref, correction = correction)#
+            n.col.randon <- dim(randon)[2]#
+            n.row.randon <- dim(randon)[1]#
+            sam.randon <- sample(1:n.row.randon, r, replace = TRUE)#
+            permut.randon <- randon[sam.randon, 1:n.col.randon]#
+            dist.permut.randon <- vegdist(permut.randon, method = dist)#
+            if (squareroot == TRUE) {#
+                dist.permut.randon <- sqrt(dist.permut.randon)#
+            }#
+            vectors.permut.randon <- pcoa(dist.permut.randon, #
+                correction = correction)$vectors#
+            eixo <- axis#
+            if (!(dim(vectors.permut.randon)[2] >= axis)) {#
+                n.number.randon <- abs(dim(vectors.permut.randon)[2] - #
+                  axis)#
+                eixo <- dim(vectors.permut.randon)[2]#
+                vectors.permut.randon <- cbind(vectors.permut.randon, #
+                  matrix(rep(0, dim(vectors.permut.randon)[1] * #
+                    n.number.randon), nrow = dim(vectors.permut.randon)[1], #
+                    ncol = n.number.randon))#
+            }#
+            matrix.2[j, c(1:eixo)] <- 1#
+            for (m in 1:axis) {#
+                procrustes.scor.randon <- procrustes(pco.randon.ref$vectors[sam.randon, #
+                  1:m], vectors.permut.randon[, 1:m])#
+                fit.procrustes.randon <- fitted(procrustes.scor.randon, #
+                  truemean = TRUE)#
+                matrix.randon[j, m] <- as.numeric(cor(pco.randon.ref$vectors[sam.randon, #
+                  m], fit.procrustes.randon[, m]))#
+            }#
+        }#
+        matrix.sig <- matrix(NA, nrow = iterations, ncol = axis)#
+        for (k in 1:iterations) {#
+            for (n in 1:axis) {#
+                matrix.sig[k, n] <- ifelse(matrix.randon[k, n] >= #
+                  matrix.permut[k, n], 1, 0)#
+            }#
+        }#
+        mean.permut <- colMeans(matrix.permut)#
+        mean.randon <- colMeans(matrix.randon)#
+        sig <- colSums(matrix.sig)#
+        result <- sig/iterations#
+        numero.permut <- colSums(matrix.1, na.rm = TRUE)#
+        numero.randon <- colSums(matrix.2, na.rm = TRUE)#
+        mean.cor.null[((r - n.start) + 1), ] <- mean.randon#
+        mean.cor.bootstrap[((r - n.start) + 1), ] <- mean.permut#
+        cumulative.frequency[((r - n.start) + 1), ] <- sig#
+        probabilities[((r - n.start) + 1), ] <- result#
+        n.permut[((r - n.start) + 1), ] <- numero.permut#
+        n.randon[((r - n.start) + 1), ] <- numero.randon#
+    }#
+    Result <- list(call = match.call(), PCoA = pco.ref, correlations = correlations, #
+        mean.cor.null = mean.cor.null, mean.cor.bootstrap = mean.cor.bootstrap, #
+        cumulative.frequency = cumulative.frequency, n.permut.bootstrap = n.permut, #
+        n.permut.null = n.randon, probabilities = probabilities)#
+    class(Result) <- "pcoasig"#
+    return(Result)#
+}
+?pcoa.sig
+data(dune)
+pcoa.sig(dune,axis=10,dist="euclidean",n.start=NULL,iterations=1000)
+pcoa.sig(dune,axis=10,dist="euclidean",n.start=NULL,iterations=10)
+pcoa.sig<-function (data, dist = "gower", correction = "none", squareroot = FALSE, #
+    n.start = NULL, axis = 6, iterations = 1000) #
+{#
+    data <- as.matrix(data)#
+    colnames(data) <- colnames(data, do.NULL = FALSE, prefix = "V.")#
+    rownames(data) <- rownames(data, do.NULL = FALSE, prefix = "")#
+    n.row <- dim(data)[1]#
+    n.col <- dim(data)[2]#
+    n.start <- n.start#
+    if (is.null(n.start)) {#
+        n.start <- n.row#
+    }#
+    if (n.start > n.row) {#
+        stop("\n n.start must be lower than the number of sampling units\n")#
+    }#
+    table.row <- (n.row - n.start) + 1#
+    dist.ref <- vegdist(data, method = dist)#
+    if (squareroot == TRUE) {#
+        dist.ref <- sqrt(dist.ref)#
+    }#
+    pco.ref <- pcoa(dist.ref, correction = correction)#
+    n.axis.ref <- dim(pco.ref$vectors)[2]#
+    if (axis > n.axis.ref) {#
+        stop("\n axis must be lower than the number of axis with positive eigenvalues in reference ordination\n")#
+    }#
+    if (axis > n.start) {#
+        stop("\n n.start must be higher than the number of axis monitored\n")#
+    }#
+    correlations <- matrix(NA, nrow = n.col, ncol = n.axis.ref)#
+    for (i in 1:n.col) {#
+        for (j in 1:n.axis.ref) {#
+            correlations[i, j] <- cor(data[, i], pco.ref$vectors[, #
+                j])#
+        }#
+    }#
+    colnames(correlations) <- colnames(pco.ref$vectors)#
+    rownames(correlations) <- colnames(data, do.NULL = FALSE, #
+        prefix = "Uni.")#
+    mean.cor.null <- matrix(NA, nrow = table.row, ncol = axis)#
+    mean.cor.bootstrap <- matrix(NA, nrow = table.row, ncol = axis)#
+    cumulative.frequency <- matrix(NA, nrow = table.row, ncol = axis)#
+    probabilities <- matrix(NA, nrow = table.row, ncol = axis)#
+    n.permut <- matrix(NA, nrow = table.row, ncol = axis)#
+    n.randon <- matrix(NA, nrow = table.row, ncol = axis)#
+    colnames(mean.cor.null) <- colnames(mean.cor.null, do.NULL = FALSE, #
+        prefix = "Axis.")#
+    colnames(mean.cor.bootstrap) <- colnames(mean.cor.bootstrap, #
+        do.NULL = FALSE, prefix = "Axis.")#
+    colnames(cumulative.frequency) <- colnames(cumulative.frequency, #
+        do.NULL = FALSE, prefix = "Axis.")#
+    colnames(probabilities) <- colnames(probabilities, do.NULL = FALSE, #
+        prefix = "Axis.")#
+    colnames(n.permut) <- colnames(n.permut, do.NULL = FALSE, #
+        prefix = "Axis.")#
+    colnames(n.randon) <- colnames(n.randon, do.NULL = FALSE, #
+        prefix = "Axis.")#
+    rownames(mean.cor.null) <- as.vector(n.start:n.row)#
+    rownames(mean.cor.bootstrap) <- as.vector(n.start:n.row)#
+    rownames(cumulative.frequency) <- as.vector(n.start:n.row)#
+    rownames(probabilities) <- as.vector(n.start:n.row)#
+    rownames(n.permut) <- as.vector(n.start:n.row)#
+    rownames(n.randon) <- as.vector(n.start:n.row)#
+    for (r in n.start:n.row) {#
+        matrix.permut <- matrix(NA, nrow = iterations, ncol = axis)#
+        matrix.1 <- matrix(NA, nrow = iterations, ncol = axis)#
+        for (i in 1:iterations) {#
+            sam <- sample(1:n.row, r, replace = TRUE)#
+            permut <- data[sam, 1:n.col]#
+            dist.permut <- vegdist(permut, method = dist)#
+            if (squareroot == TRUE) {#
+                dist.permut <- sqrt(dist.permut)#
+            }#
+            vectors.permut <- pcoa(dist.permut, correction = correction)$vectors#
+            eixo <- axis#
+            if (!(dim(vectors.permut)[2] >= axis)) {#
+                n.number <- abs(dim(vectors.permut)[2] - axis)#
+                eixo <- dim(vectors.permut)[2]#
+                vectors.permut <- cbind(vectors.permut, matrix(rep(0, #
+                  dim(vectors.permut)[1] * n.number), nrow = dim(vectors.permut)[1], #
+                  ncol = n.number))#
+            }#
+            matrix.1[i, c(1:eixo)] <- 1#
+            for (l in 1:axis) {#
+                procrustes.scor <- procrustes(pco.ref$vectors[sam, #
+                  1:l], vectors.permut[, 1:l])#
+                  print(1:l)#
+                fit.procrustes <- fitted(procrustes.scor, truemean = TRUE)#
+                matrix.permut[i, l] <- as.numeric(cor(pco.ref$vectors[sam, #
+                  l], fit.procrustes[, l]))#
+            }#
+        }#
+        matrix.randon <- matrix(NA, nrow = iterations, ncol = axis)#
+        matrix.2 <- matrix(NA, nrow = iterations, ncol = axis)#
+        for (j in 1:iterations) {#
+            randon <- t(randomizeMatrix(t(data), null.model = "richness"))#
+            dist.random.ref <- vegdist(randon, method = dist)#
+            if (squareroot == TRUE) {#
+                dist.random.ref <- sqrt(dist.random.ref)#
+            }#
+            pco.randon.ref <- pcoa(dist.random.ref, correction = correction)#
+            n.col.randon <- dim(randon)[2]#
+            n.row.randon <- dim(randon)[1]#
+            sam.randon <- sample(1:n.row.randon, r, replace = TRUE)#
+            permut.randon <- randon[sam.randon, 1:n.col.randon]#
+            dist.permut.randon <- vegdist(permut.randon, method = dist)#
+            if (squareroot == TRUE) {#
+                dist.permut.randon <- sqrt(dist.permut.randon)#
+            }#
+            vectors.permut.randon <- pcoa(dist.permut.randon, #
+                correction = correction)$vectors#
+            eixo <- axis#
+            if (!(dim(vectors.permut.randon)[2] >= axis)) {#
+                n.number.randon <- abs(dim(vectors.permut.randon)[2] - #
+                  axis)#
+                eixo <- dim(vectors.permut.randon)[2]#
+                vectors.permut.randon <- cbind(vectors.permut.randon, #
+                  matrix(rep(0, dim(vectors.permut.randon)[1] * #
+                    n.number.randon), nrow = dim(vectors.permut.randon)[1], #
+                    ncol = n.number.randon))#
+            }#
+            matrix.2[j, c(1:eixo)] <- 1#
+            for (m in 1:axis) {#
+                procrustes.scor.randon <- procrustes(pco.randon.ref$vectors[sam.randon, #
+                  1:m], vectors.permut.randon[, 1:m])#
+                  print(1:m)#
+                fit.procrustes.randon <- fitted(procrustes.scor.randon, #
+                  truemean = TRUE)#
+                matrix.randon[j, m] <- as.numeric(cor(pco.randon.ref$vectors[sam.randon, #
+                  m], fit.procrustes.randon[, m]))#
+            }#
+        }#
+        matrix.sig <- matrix(NA, nrow = iterations, ncol = axis)#
+        for (k in 1:iterations) {#
+            for (n in 1:axis) {#
+                matrix.sig[k, n] <- ifelse(matrix.randon[k, n] >= #
+                  matrix.permut[k, n], 1, 0)#
+            }#
+        }#
+        mean.permut <- colMeans(matrix.permut)#
+        mean.randon <- colMeans(matrix.randon)#
+        sig <- colSums(matrix.sig)#
+        result <- sig/iterations#
+        numero.permut <- colSums(matrix.1, na.rm = TRUE)#
+        numero.randon <- colSums(matrix.2, na.rm = TRUE)#
+        mean.cor.null[((r - n.start) + 1), ] <- mean.randon#
+        mean.cor.bootstrap[((r - n.start) + 1), ] <- mean.permut#
+        cumulative.frequency[((r - n.start) + 1), ] <- sig#
+        probabilities[((r - n.start) + 1), ] <- result#
+        n.permut[((r - n.start) + 1), ] <- numero.permut#
+        n.randon[((r - n.start) + 1), ] <- numero.randon#
+    }#
+    Result <- list(call = match.call(), PCoA = pco.ref, correlations = correlations, #
+        mean.cor.null = mean.cor.null, mean.cor.bootstrap = mean.cor.bootstrap, #
+        cumulative.frequency = cumulative.frequency, n.permut.bootstrap = n.permut, #
+        n.permut.null = n.randon, probabilities = probabilities)#
+    class(Result) <- "pcoasig"#
+    return(Result)#
+}
+pcoa.sig(dune,axis=10,dist="euclidean",n.start=NULL,iterations=10)
+AAA<-pcoa.sig(dune,axis=10,dist="euclidean",n.start=NULL,iterations=10)
+AAA
+require(vegan)
+pcoa.sig<-function (data, dist = "gower", correction = "none", squareroot = FALSE, #
+    n.start = NULL, axis = 6, iterations = 1000) #
+{#
+    data <- as.matrix(data)#
+    colnames(data) <- colnames(data, do.NULL = FALSE, prefix = "V.")#
+    rownames(data) <- rownames(data, do.NULL = FALSE, prefix = "")#
+    n.row <- dim(data)[1]#
+    n.col <- dim(data)[2]#
+    n.start <- n.start#
+    if (is.null(n.start)) {#
+        n.start <- n.row#
+    }#
+    if (n.start > n.row) {#
+        stop("\n n.start must be lower than the number of sampling units\n")#
+    }#
+    table.row <- (n.row - n.start) + 1#
+    dist.ref <- vegdist(data, method = dist)#
+    if (squareroot == TRUE) {#
+        dist.ref <- sqrt(dist.ref)#
+    }#
+    pco.ref <- pcoa(dist.ref, correction = correction)#
+    n.axis.ref <- dim(pco.ref$vectors)[2]#
+    if (axis > n.axis.ref) {#
+        stop("\n axis must be lower than the number of axis with positive eigenvalues in reference ordination\n")#
+    }#
+    if (axis > n.start) {#
+        stop("\n n.start must be higher than the number of axis monitored\n")#
+    }#
+    correlations <- matrix(NA, nrow = n.col, ncol = n.axis.ref)#
+    for (i in 1:n.col) {#
+        for (j in 1:n.axis.ref) {#
+            correlations[i, j] <- cor(data[, i], pco.ref$vectors[, #
+                j])#
+        }#
+    }#
+    colnames(correlations) <- colnames(pco.ref$vectors)#
+    rownames(correlations) <- colnames(data, do.NULL = FALSE, #
+        prefix = "Uni.")#
+    mean.cor.null <- matrix(NA, nrow = table.row, ncol = axis)#
+    mean.cor.bootstrap <- matrix(NA, nrow = table.row, ncol = axis)#
+    cumulative.frequency <- matrix(NA, nrow = table.row, ncol = axis)#
+    probabilities <- matrix(NA, nrow = table.row, ncol = axis)#
+    n.permut <- matrix(NA, nrow = table.row, ncol = axis)#
+    n.randon <- matrix(NA, nrow = table.row, ncol = axis)#
+    colnames(mean.cor.null) <- colnames(mean.cor.null, do.NULL = FALSE, #
+        prefix = "Axis.")#
+    colnames(mean.cor.bootstrap) <- colnames(mean.cor.bootstrap, #
+        do.NULL = FALSE, prefix = "Axis.")#
+    colnames(cumulative.frequency) <- colnames(cumulative.frequency, #
+        do.NULL = FALSE, prefix = "Axis.")#
+    colnames(probabilities) <- colnames(probabilities, do.NULL = FALSE, #
+        prefix = "Axis.")#
+    colnames(n.permut) <- colnames(n.permut, do.NULL = FALSE, #
+        prefix = "Axis.")#
+    colnames(n.randon) <- colnames(n.randon, do.NULL = FALSE, #
+        prefix = "Axis.")#
+    rownames(mean.cor.null) <- as.vector(n.start:n.row)#
+    rownames(mean.cor.bootstrap) <- as.vector(n.start:n.row)#
+    rownames(cumulative.frequency) <- as.vector(n.start:n.row)#
+    rownames(probabilities) <- as.vector(n.start:n.row)#
+    rownames(n.permut) <- as.vector(n.start:n.row)#
+    rownames(n.randon) <- as.vector(n.start:n.row)#
+    for (r in n.start:n.row) {#
+        matrix.permut <- matrix(NA, nrow = iterations, ncol = axis)#
+        matrix.1 <- matrix(NA, nrow = iterations, ncol = axis)#
+        for (i in 1:iterations) {#
+            sam <- sample(1:n.row, r, replace = TRUE)#
+            permut <- data[sam, 1:n.col]#
+            dist.permut <- vegdist(permut, method = dist)#
+            if (squareroot == TRUE) {#
+                dist.permut <- sqrt(dist.permut)#
+            }#
+            vectors.permut <- pcoa(dist.permut, correction = correction)$vectors#
+            eixo <- axis#
+            if (!(dim(vectors.permut)[2] >= axis)) {#
+                n.number <- abs(dim(vectors.permut)[2] - axis)#
+                eixo <- dim(vectors.permut)[2]#
+                vectors.permut <- cbind(vectors.permut, matrix(rep(0, #
+                  dim(vectors.permut)[1] * n.number), nrow = dim(vectors.permut)[1], #
+                  ncol = n.number))#
+            }#
+            matrix.1[i, c(1:eixo)] <- 1#
+            for (l in 1:axis) {#
+                procrustes.scor <- procrustes(pco.ref$vectors[sam, #
+                  1:l], vectors.permut[, 1:l], choices=1:l)#
+                fit.procrustes <- fitted(procrustes.scor, truemean = TRUE)#
+                matrix.permut[i, l] <- as.numeric(cor(pco.ref$vectors[sam, #
+                  l], fit.procrustes[, l]))#
+            }#
+        }#
+        matrix.randon <- matrix(NA, nrow = iterations, ncol = axis)#
+        matrix.2 <- matrix(NA, nrow = iterations, ncol = axis)#
+        for (j in 1:iterations) {#
+            randon <- t(randomizeMatrix(t(data), null.model = "richness"))#
+            dist.random.ref <- vegdist(randon, method = dist)#
+            if (squareroot == TRUE) {#
+                dist.random.ref <- sqrt(dist.random.ref)#
+            }#
+            pco.randon.ref <- pcoa(dist.random.ref, correction = correction)#
+            n.col.randon <- dim(randon)[2]#
+            n.row.randon <- dim(randon)[1]#
+            sam.randon <- sample(1:n.row.randon, r, replace = TRUE)#
+            permut.randon <- randon[sam.randon, 1:n.col.randon]#
+            dist.permut.randon <- vegdist(permut.randon, method = dist)#
+            if (squareroot == TRUE) {#
+                dist.permut.randon <- sqrt(dist.permut.randon)#
+            }#
+            vectors.permut.randon <- pcoa(dist.permut.randon, #
+                correction = correction)$vectors#
+            eixo <- axis#
+            if (!(dim(vectors.permut.randon)[2] >= axis)) {#
+                n.number.randon <- abs(dim(vectors.permut.randon)[2] - #
+                  axis)#
+                eixo <- dim(vectors.permut.randon)[2]#
+                vectors.permut.randon <- cbind(vectors.permut.randon, #
+                  matrix(rep(0, dim(vectors.permut.randon)[1] * #
+                    n.number.randon), nrow = dim(vectors.permut.randon)[1], #
+                    ncol = n.number.randon))#
+            }#
+            matrix.2[j, c(1:eixo)] <- 1#
+            for (m in 1:axis) {#
+                procrustes.scor.randon <- procrustes(pco.randon.ref$vectors[sam.randon, #
+                  1:m], vectors.permut.randon[, 1:m],choices=1:m)#
+                fit.procrustes.randon <- fitted(procrustes.scor.randon, #
+                  truemean = TRUE)#
+                matrix.randon[j, m] <- as.numeric(cor(pco.randon.ref$vectors[sam.randon, #
+                  m], fit.procrustes.randon[, m]))#
+            }#
+        }#
+        matrix.sig <- matrix(NA, nrow = iterations, ncol = axis)#
+        for (k in 1:iterations) {#
+            for (n in 1:axis) {#
+                matrix.sig[k, n] <- ifelse(matrix.randon[k, n] >= #
+                  matrix.permut[k, n], 1, 0)#
+            }#
+        }#
+        mean.permut <- colMeans(matrix.permut)#
+        mean.randon <- colMeans(matrix.randon)#
+        sig <- colSums(matrix.sig)#
+        result <- sig/iterations#
+        numero.permut <- colSums(matrix.1, na.rm = TRUE)#
+        numero.randon <- colSums(matrix.2, na.rm = TRUE)#
+        mean.cor.null[((r - n.start) + 1), ] <- mean.randon#
+        mean.cor.bootstrap[((r - n.start) + 1), ] <- mean.permut#
+        cumulative.frequency[((r - n.start) + 1), ] <- sig#
+        probabilities[((r - n.start) + 1), ] <- result#
+        n.permut[((r - n.start) + 1), ] <- numero.permut#
+        n.randon[((r - n.start) + 1), ] <- numero.randon#
+    }#
+    Result <- list(call = match.call(), PCoA = pco.ref, correlations = correlations, #
+        mean.cor.null = mean.cor.null, mean.cor.bootstrap = mean.cor.bootstrap, #
+        cumulative.frequency = cumulative.frequency, n.permut.bootstrap = n.permut, #
+        n.permut.null = n.randon, probabilities = probabilities)#
+    class(Result) <- "pcoasig"#
+    return(Result)#
+}
+data(dune)
+AAA<-pcoa.sig(dune,axis=10,dist="euclidean",n.start=NULL,iterations=10)
+require(ape)
+data(dune)
+AAA<-pcoa.sig(dune,axis=10,dist="euclidean",n.start=NULL,iterations=10)
+require(picante)
+AAA<-pcoa.sig(dune,axis=10,dist="euclidean",n.start=NULL,iterations=10)
+AAA
+rm(pcoa.sig)
+pcoa.sig
+require(PCPS)
+BBB<-pcoa.sig(dune,axis=10,dist="euclidean",n.start=NULL,iterations=10)
+BBB
+AAA
+BBB
+require(PCPS)
+?pcps
+args(plot)
+args(print)
+?print
+?plot
+?summary
+??scores
+require(PCPS)
+?scores
+require(PCPS)
+syncsa
+optimal
+?pcoa.sig
+A<-pcoa.sig(dune,axis=10,dist="euclidean",n.start=NULL,iterations=100)
+data(dune)
+A<-pcoa.sig(dune,axis=10,dist="euclidean",n.start=NULL,iterations=100)
+scores.pcoasig<-function (x, ...) #
+{#
+	if(missing(choices)){#
+		choices<-1:2#
+	}#
+	if (length(choices) != 2) {#
+        stop("\n Choices must have length equal to two \n")#
+    }#
+    max1 <- max(x$PCoA$vectors[, choices[1]])#
+    max2 <- max(x$PCoA$vectors[, choices[2]])#
+    min1 <- min(x$PCoA$vectors[, choices[1]])#
+    min2 <- min(x$PCoA$vectors[, choices[2]])#
+    mean1 <- mean(max1, max2, min1, min2)#
+    scores1 <- x$correlations * mean1#
+    Res <- list(scores.sites = x$PCoA$vectors[, choices], #
+        scores.species = scores1[, choices])#
+    return(Res)#
+}
+scores(A)
+syncsa
+missing(choices)
+?missing
+scores(A, choices=1)
+scores(A, choices=1:2)
+scores
+choices
+is.null(choices)
+scores.pcoasig<-function (x, ...) #
+{#
+#	if(missing(choices)){#
+		choices<-1:2#
+#	}#
+	if (length(choices) != 2) {#
+        stop("\n Choices must have length equal to two \n")#
+    }#
+    max1 <- max(x$PCoA$vectors[, choices[1]])#
+    max2 <- max(x$PCoA$vectors[, choices[2]])#
+    min1 <- min(x$PCoA$vectors[, choices[1]])#
+    min2 <- min(x$PCoA$vectors[, choices[2]])#
+    mean1 <- mean(max1, max2, min1, min2)#
+    scores1 <- x$correlations * mean1#
+    Res <- list(scores.sites = x$PCoA$vectors[, choices], #
+        scores.species = scores1[, choices])#
+    return(Res)#
+}
+scores(A, choices=1:2)
+scores(A)
+scores(A, choices=3.4)
+require(PCPS)
+?pcps
+?matrix.p
+require(PCPS)
+?pcps
+data(flona)
+res<-pcps(flona$community,flona$phylo)
+res
+scores(res)
+x<-res
+choices=c(1,2)
+if (length(choices) != 2) {#
+        stop("\n Choices must have length equal to two \n")#
+    }
+max1 <- max(x$PCoA$vectors[, choices[1]])
+}
+if (length(choices) != 2) {#
+        stop("\n Choices must have length equal to two \n")#
+    }
+max1 <- max(x$PCoA$vectors[, choices[1]])
+x$PCoA$vectors
+max1<-max(x$vectors[,choices[1]])
+max2<-max(x$vectors[,choices[2]])
+min1<-min(x$vectors[,choices[1]])
+min2<-min(x$vectors[,choices[2]])
+x$correlations[,choices[1]]
+x$correlations[,choices]
+x$correlations[,choices[1]]
+ifelse(x$correlations[,choices[1]]>0)
+max1
+x$correlations[,choices[1]]
+min1
+abs(min1)
+scores1<-ifelse(x$correlations[,choices[1]]>0,x$correlations[,choices[1]]*max1,x$correlations[,choices[1]]*abs(min1))
+scores1
+scores1<-ifelse(x$correlations[,choices[1]]>0,x$correlations[,choices[1]]*max1,x$correlations[,choices[1]]*abs(min1))#
+	scores2<-ifelse(x$correlations[,choices[2]]>0,x$correlations[,choices[2]]*max2,x$correlations[,choices[2]]*abs(min2))
+scores.pcps<-function(x, choices=c(1,2), ...){#
+	if (length(choices) != 2) {#
+        stop("\n Choices must have length equal to two \n")#
+    }#
+	max1<-max(x$vectors[,choices[1]])#
+	max2<-max(x$vectors[,choices[2]])#
+	min1<-min(x$vectors[,choices[1]])#
+	min2<-min(x$vectors[,choices[2]])#
+	scores1<-ifelse(x$correlations[,choices[1]]>0,x$correlations[,choices[1]]*max1,x$correlations[,choices[1]]*abs(min1))#
+	scores2<-ifelse(x$correlations[,choices[2]]>0,x$correlations[,choices[2]]*max2,x$correlations[,choices[2]]*abs(min2))#
+	Res<-list(scores.sites=x$vectors[, choices],scores.species=cbind(scores1,scores2))#
+	return(Res)#
+}
+scores(res)
+?pcps
+plot(res, display="text",groups=c(rep(1,30),rep(2,29)))
+scores(res,choices=c(3,4))
+plot(res, display="text",groups=c(rep(1,30),rep(2,29)))
+plot(res, display="text",groups=c(rep(1,30),rep(2,29)),choices=c(3,4))
+scores(res,choices=c(3,4))
+colnames(scores.sites=x$vectors[, choices])
+choices
+colnames(x$vectors[, choices])
+rscores<-cbind(scores1,scores2)
+scores.pcps<-function(x, choices=c(1,2), ...){#
+	if (length(choices) != 2) {#
+        stop("\n Choices must have length equal to two \n")#
+    }#
+	max1<-max(x$vectors[,choices[1]])#
+	max2<-max(x$vectors[,choices[2]])#
+	min1<-min(x$vectors[,choices[1]])#
+	min2<-min(x$vectors[,choices[2]])#
+	scores1<-ifelse(x$correlations[,choices[1]]>0,x$correlations[,choices[1]]*max1,x$correlations[,choices[1]]*abs(min1))#
+	scores2<-ifelse(x$correlations[,choices[2]]>0,x$correlations[,choices[2]]*max2,x$correlations[,choices[2]]*abs(min2))#
+	rscores<-cbind(scores1,scores2)#
+	colnames(rscores)=colnames(x$vectors[, choices])#
+	Res<-list(scores.sites=x$vectors[, choices],scores.species=rscores)#
+	return(Res)#
+}
+scores(res,choices=c(3,4))
+scores.pcps<-function(x, choices=c(1,2), ...){#
+	if (length(choices) != 2) {#
+        stop("\n Choices must have length equal to two \n")#
+    }#
+	max1<-max(x$vectors[,choices[1]])#
+	max2<-max(x$vectors[,choices[2]])#
+	min1<-min(x$vectors[,choices[1]])#
+	min2<-min(x$vectors[,choices[2]])#
+	scores1<-ifelse(x$correlations[,choices[1]]>0,x$correlations[,choices[1]]*max1,x$correlations[,choices[1]]*abs(min1))#
+	scores2<-ifelse(x$correlations[,choices[2]]>0,x$correlations[,choices[2]]*max2,x$correlations[,choices[2]]*abs(min2))#
+	rscores<-cbind(scores1,scores2)#
+	colnames(rscores)=colnames(x$vectors[, choices])#
+	Res<-list(scores.sites=x$vectors[, choices],scores.species=rscores)#
+	return(Res)#
+}
+scores(res,choices=c(3,4))
+plot(res, display="text",groups=c(rep(1,30),rep(2,29)),choices=c(3,4))
+?pcps
+data(flona)#
+res<-pcps(flona$community,flona$phylo)#
+res#
+summary(res)#
+scores(res)#
+plot(res, display="text",groups=c(rep(1,30),rep(2,29)))
+plot(res, display="text",groups=c(rep(1,30),rep(2,29)),choices=c(3,4))
+plot.pcps
+require(PCPS)
+?pcps.curve
+data(flona)#
+res_curve<-pcps.curve(flona$community, flona$phylo, flona$trait[,1], method = "bray",#
+        squareroot = TRUE, null.model = TRUE, runs = 9, progressbar = FALSE)#
+res_curve
+print.pcps.curve<-function(x, ...){#
+	cat("Call:\n")#
+	cat(deparse(x$call), "\n\n")#
+	cat("PCPS curve:\n")#
+	res<-as.matrix(x$curve_obs)#
+	if(!is.null(x$curve.null)){#
+		N<-length(x$curve.null)#
+		X<-matrix(NA,N,dim(x$curve.obs)[1])#
+		Y<-X#
+		for(i in 1:N){#
+			X[i,]<-x$curve.null[[i]][,1]#
+			Y[i,]<-x$curve.null[[i]][,2]#
+		}#
+		mean_X<-apply(X,2,mean,na.rm=T)#
+		mean_Y<-apply(Y,2,mean,na.rm=T)#
+		sd_X<-apply(X,2,sd,na.rm=T)#
+		sd_Y<-apply(Y,2,sd,na.rm=T)#
+		error_X<-sd_X/sqrt(N)#
+		error_Y<-sd_Y/sqrt(N)#
+		res<-cbind(x$curve_obs,mean_X,mean_Y,sd_X,sd_Y,error_X,error_Y)#
+	}#
+	print(as.matrix(res))#
+	invisible(x)#
+}
+res_curve
+pcps.curve<-function(comm, dist.spp,trait,method = "bray", squareroot = TRUE,null.model=TRUE,runs=99,progressbar=FALSE){#
+	dis<-dist.spp#
+	m_t_obs<-matrix.t(comm,trait,scale=FALSE,notification=FALSE)$matrix.T#
+	ord<-pcps(comm,dis, method = method, squareroot = squareroot)#
+	values<-ord$values#
+	vectors<-ord$vectors#
+	calc.pcpc.curve<-function(values,vectors,matrixT){#
+		use<-1:(dim(vectors)[2])#
+		x<-vectors[,use]#
+		y<-matrixT[,1]#
+		fac<-length(use)#
+		xnam <- paste("x[,", 1:fac,"]", sep="")#
+		res.y<-matrix(NA,nrow=fac,ncol=1)#
+		for (j in 1:fac){#
+			res.y[j,1]<-as.numeric(summary(lm(as.formula(paste("y ~ ", paste(xnam[1:j], collapse= "+")))))$r.squared)#
+		}	#
+		colnames(res.y)="Coefficient_of_determination"#
+		res.x<-as.matrix(values[1:fac,3])#
+		colnames(res.x)="Cumulative_PCPS_eigenvalues"#
+		result<-cbind(res.x,res.y)#
+	return(result)#
+	}#
+	curve_obs<-calc.pcpc.curve(values,vectors,m_t_obs)#
+	if(null.model){#
+		res_curve_null<-vector("list",runs)#
+		for(k in 1:runs){#
+			dist_null<-taxaShuffle(dis)#
+			match.names <- match(colnames(comm), colnames(dist_null))#
+			m_p_null<-matrix.p(comm,as.matrix(dist_null[match.names, match.names]))$matrix.P#
+			dist_p_null <- vegdist(m_p_null, method = method)#
+		    if (squareroot == TRUE) {#
+    		    dist_p_null <- sqrt(dist_p_null)#
+    		}#
+			ord_null<-pcoa(dist_p_null)#
+			values_null<-ord_null$values[,c(1,2,4)]#
+			vectors_null<-ord_null$vectors#
+			res_curve_null[[k]]<-calc.pcpc.curve(values_null,vectors_null,m_t_obs)#
+			if(progressbar){#
+				ProgressBAR(k,runs,style=3)#
+			}#
+		}#
+	}#
+	ReTuRn<-list(call= match.call(),curve_obs=curve_obs)#
+	if(null.model){#
+		ReTuRn<-list(call= match.call(),curve.obs=curve_obs,curve.null=res_curve_null)	#
+	}#
+	class(ReTuRn) <- "pcps.curve"#
+	return(ReTuRn)	#
+}
+res_curve<-pcps.curve(flona$community, flona$phylo, flona$trait[,1], method = "bray",
+squareroot = TRUE, null.model = TRUE, runs = 9, progressbar = FALSE)
+res_curve
+x<-res_curve
+x$call
+x$curve_obs
+x$curve.obs
+x$curve.null
+if(!is.null(x$curve.null)){#
+		N<-length(x$curve.null)#
+		X<-matrix(NA,N,dim(x$curve.obs)[1])#
+		Y<-X#
+		for(i in 1:N){#
+			X[i,]<-x$curve.null[[i]][,1]#
+			Y[i,]<-x$curve.null[[i]][,2]#
+		}#
+		mean_X<-apply(X,2,mean,na.rm=T)#
+		mean_Y<-apply(Y,2,mean,na.rm=T)#
+		sd_X<-apply(X,2,sd,na.rm=T)#
+		sd_Y<-apply(Y,2,sd,na.rm=T)#
+		error_X<-sd_X/sqrt(N)#
+		error_Y<-sd_Y/sqrt(N)#
+		res<-cbind(x$curve_obs,mean_X,mean_Y,sd_X,sd_Y,error_X,error_Y)#
+	}
+res
+x$curve.obs
+res<-as.matrix(x$curve.obs)#
+	if(!is.null(x$curve.null)){#
+		N<-length(x$curve.null)#
+		X<-matrix(NA,N,dim(x$curve.obs)[1])#
+		Y<-X#
+		for(i in 1:N){#
+			X[i,]<-x$curve.null[[i]][,1]#
+			Y[i,]<-x$curve.null[[i]][,2]#
+		}#
+		mean_X<-apply(X,2,mean,na.rm=T)#
+		mean_Y<-apply(Y,2,mean,na.rm=T)#
+		sd_X<-apply(X,2,sd,na.rm=T)#
+		sd_Y<-apply(Y,2,sd,na.rm=T)#
+		error_X<-sd_X/sqrt(N)#
+		error_Y<-sd_Y/sqrt(N)#
+		res<-cbind(x$curve.obs,mean_X,mean_Y,sd_X,sd_Y,error_X,error_Y)#
+	}
+res
+print.pcps.curve<-function(x, ...){#
+	cat("Call:\n")#
+	cat(deparse(x$call), "\n\n")#
+	cat("PCPS curve:\n")#
+	print(as.matrix(x$curve.obs))#
+	if(!is.null(x$curve.null)){#
+		N<-length(x$curve.null)#
+		X<-matrix(NA,N,dim(x$curve.obs)[1])#
+		Y<-X#
+		for(i in 1:N){#
+			X[i,]<-x$curve.null[[i]][,1]#
+			Y[i,]<-x$curve.null[[i]][,2]#
+		}#
+		mean_X<-apply(X,2,mean,na.rm=T)#
+		mean_Y<-apply(Y,2,mean,na.rm=T)#
+		sd_X<-apply(X,2,sd,na.rm=T)#
+		sd_Y<-apply(Y,2,sd,na.rm=T)#
+		error_X<-sd_X/sqrt(N)#
+		error_Y<-sd_Y/sqrt(N)#
+		resN<-cbind(mean_X,mean_Y,sd_X,sd_Y,error_X,error_Y)#
+		cat("PCPS curve:\n")#
+		print(as.matrix(resN))#
+	}#
+	invisible(x)#
+}
+res_curve
+print.pcps.curve<-function(x, ...){#
+	cat("Call:\n")#
+	cat(deparse(x$call), "\n\n")#
+	cat("PCPS curve:\n")#
+	print(as.matrix(x$curve.obs))#
+	if(!is.null(x$curve.null)){#
+		N<-length(x$curve.null)#
+		X<-matrix(NA,N,dim(x$curve.obs)[1])#
+		Y<-X#
+		for(i in 1:N){#
+			X[i,]<-x$curve.null[[i]][,1]#
+			Y[i,]<-x$curve.null[[i]][,2]#
+		}#
+		mean_X<-apply(X,2,mean,na.rm=T)#
+		mean_Y<-apply(Y,2,mean,na.rm=T)#
+		sd_X<-apply(X,2,sd,na.rm=T)#
+		sd_Y<-apply(Y,2,sd,na.rm=T)#
+		error_X<-sd_X/sqrt(N)#
+		error_Y<-sd_Y/sqrt(N)#
+		resN<-cbind(mean_X,mean_Y,sd_X,sd_Y,error_X,error_Y)#
+		cat("\n\n")#
+		cat("PCPS curve:\n")#
+		print(as.matrix(resN))#
+	}#
+	invisible(x)#
+}
+res_curve
+x<-res_curve#
+print.pcps.curve<-function(x, ...){#
+	cat("Call:\n")#
+	cat(deparse(x$call), "\n\n")#
+	cat("PCPS curve:\n")#
+	print(as.matrix(x$curve.obs))#
+	if(!is.null(x$curve.null)){#
+		N<-length(x$curve.null)#
+		X<-matrix(NA,N,dim(x$curve.obs)[1])#
+		Y<-X#
+		for(i in 1:N){#
+			X[i,]<-x$curve.null[[i]][,1]#
+			Y[i,]<-x$curve.null[[i]][,2]#
+		}#
+		mean_X<-apply(X,2,mean,na.rm=T)#
+		mean_Y<-apply(Y,2,mean,na.rm=T)#
+		sd_X<-apply(X,2,sd,na.rm=T)#
+		sd_Y<-apply(Y,2,sd,na.rm=T)#
+		error_X<-sd_X/sqrt(N)#
+		error_Y<-sd_Y/sqrt(N)#
+		resN<-cbind(mean_X,mean_Y,sd_X,sd_Y,error_X,error_Y)#
+		cat("\n")#
+		cat("PCPS curve:\n")#
+		print(as.matrix(resN))#
+	}#
+	invisible(x)#
+}
+res_curve
+x<-res_curve#
+print.pcps.curve<-function(x, ...){#
+	cat("Call:\n")#
+	cat(deparse(x$call), "\n\n")#
+	cat("PCPS curve observed:\n")#
+	res<-as.matrix(x$curve.obs)#
+	print(res)#
+	if(!is.null(x$curve.null)){#
+		N<-length(x$curve.null)#
+		X<-matrix(NA,N,dim(x$curve.obs)[1])#
+		Y<-X#
+		for(i in 1:N){#
+			X[i,]<-x$curve.null[[i]][,1]#
+			Y[i,]<-x$curve.null[[i]][,2]#
+		}#
+		mean_X<-apply(X,2,mean,na.rm=T)#
+		mean_Y<-apply(Y,2,mean,na.rm=T)#
+		sd_X<-apply(X,2,sd,na.rm=T)#
+		sd_Y<-apply(Y,2,sd,na.rm=T)#
+		error_X<-sd_X/sqrt(N)#
+		error_Y<-sd_Y/sqrt(N)#
+		resN<-cbind(mean_X,mean_Y,sd_X,sd_Y,error_X,error_Y)#
+		rownames(resN)=rownames(res)#
+		cat("\n")#
+		cat("PCPS curve null:\n")#
+		print(as.matrix(resN))#
+	}#
+	invisible(x)#
+}
+res_curve
+?pcoa
+x<-res_curve#
+print.pcps.curve<-function(x, ...){#
+	cat("Call:\n")#
+	cat(deparse(x$call), "\n\n")#
+	cat("PCPS curve observed:\n")#
+	res<-as.matrix(x$curve.obs)#
+	print(res)#
+	if(!is.null(x$curve.null)){#
+		N<-length(x$curve.null)#
+		X<-matrix(NA,N,dim(x$curve.obs)[1])#
+		Y<-X#
+		for(i in 1:N){#
+			X[i,]<-x$curve.null[[i]][,1]#
+			Y[i,]<-x$curve.null[[i]][,2]#
+		}#
+		mean_X<-apply(X,2,mean,na.rm=T)#
+		mean_Y<-apply(Y,2,mean,na.rm=T)#
+		sd_X<-apply(X,2,sd,na.rm=T)#
+		sd_Y<-apply(Y,2,sd,na.rm=T)#
+		error_X<-sd_X/sqrt(N)#
+		error_Y<-sd_Y/sqrt(N)#
+		resN<-cbind(mean_X,mean_Y,sd_X,sd_Y,error_X,error_Y)#
+		rownames(resN)=rownames(res)#
+		colnames(resN)=c("Mean_cumul_eig","Mean_R2","SD_cumul_eig","SD_R2","SE_cumul_eig","SE_R2")#
+		cat("\n")#
+		cat("PCPS curve null:\n")#
+		print(as.matrix(resN))#
+	}#
+	invisible(x)#
+}
+res_curve
+x<-res_curve#
+print.pcps.curve<-function(x, ...){#
+	cat("Call:\n")#
+	cat(deparse(x$call), "\n\n")#
+	cat("PCPS curve observed:\n")#
+	res<-as.matrix(x$curve.obs)#
+	print(res)#
+	if(!is.null(x$curve.null)){#
+		N<-length(x$curve.null)#
+		X<-matrix(NA,N,dim(x$curve.obs)[1])#
+		Y<-X#
+		for(i in 1:N){#
+			X[i,]<-x$curve.null[[i]][,1]#
+			Y[i,]<-x$curve.null[[i]][,2]#
+		}#
+		mean_X<-apply(X,2,mean,na.rm=T)#
+		mean_Y<-apply(Y,2,mean,na.rm=T)#
+		resN<-cbind(mean_X,mean_Y,sd_X,sd_Y,error_X,error_Y)#
+		rownames(resN)=rownames(res)#
+		colnames(resN)=c("Mean_cumul_eig","Mean_Coeff_determination")#
+		cat("\n")#
+		cat("PCPS curve null:\n")#
+		print(as.matrix(resN))#
+	}#
+	invisible(x)#
+}
+res_curve
+x<-res_curve#
+print.pcps.curve<-function(x, ...){#
+	cat("Call:\n")#
+	cat(deparse(x$call), "\n\n")#
+	cat("PCPS curve observed:\n")#
+	res<-as.matrix(x$curve.obs)#
+	print(res)#
+	if(!is.null(x$curve.null)){#
+		N<-length(x$curve.null)#
+		X<-matrix(NA,N,dim(x$curve.obs)[1])#
+		Y<-X#
+		for(i in 1:N){#
+			X[i,]<-x$curve.null[[i]][,1]#
+			Y[i,]<-x$curve.null[[i]][,2]#
+		}#
+		mean_X<-apply(X,2,mean,na.rm=T)#
+		mean_Y<-apply(Y,2,mean,na.rm=T)#
+		resN<-cbind(mean_X,mean_Y)#
+		rownames(resN)=rownames(res)#
+		colnames(resN)=c("Mean_cumul_eig","Mean_Coeff_determination")#
+		cat("\n")#
+		cat("PCPS curve null:\n")#
+		print(as.matrix(resN))#
+	}#
+	invisible(x)#
+}
+res_curve
+x<-res_curve#
+print.pcps.curve<-function(x, ...){#
+	cat("Call:\n")#
+	cat(deparse(x$call), "\n\n")#
+	cat("PCPS curve observed:\n")#
+	res<-as.matrix(x$curve.obs)#
+	print(res)#
+	if(!is.null(x$curve.null)){#
+		N<-length(x$curve.null)#
+		X<-matrix(NA,N,dim(x$curve.obs)[1])#
+		Y<-X#
+		for(i in 1:N){#
+			X[i,]<-x$curve.null[[i]][,1]#
+			Y[i,]<-x$curve.null[[i]][,2]#
+		}#
+		mean_X<-apply(X,2,mean,na.rm=T)#
+		mean_Y<-apply(Y,2,mean,na.rm=T)#
+		resN<-cbind(mean_X,mean_Y)#
+		rownames(resN)=rownames(res)#
+		colnames(resN)=c("Mean_cumul_PCPS_eig","Mean_Coeff_determination")#
+		cat("\n")#
+		cat("PCPS curve null:\n")#
+		print(as.matrix(resN))#
+	}#
+	invisible(x)#
+}
+res_curve
+x<-res_curve#
+print.pcps.curve<-function(x, ...){#
+	cat("Call:\n")#
+	cat(deparse(x$call), "\n\n")#
+	cat("PCPS curve observed:\n")#
+	res<-as.matrix(x$curve.obs)#
+	print(res)#
+	if(!is.null(x$curve.null)){#
+		N<-length(x$curve.null)#
+		X<-matrix(NA,N,dim(x$curve.obs)[1])#
+		Y<-X#
+		for(i in 1:N){#
+			X[i,]<-x$curve.null[[i]][,1]#
+			Y[i,]<-x$curve.null[[i]][,2]#
+		}#
+		mean_X<-apply(X,2,mean,na.rm=T)#
+		mean_Y<-apply(Y,2,mean,na.rm=T)#
+		resN<-cbind(mean_X,mean_Y)#
+		rownames(resN)=rownames(res)#
+		colnames(resN)=c("Cumulative_PCPS_eigenvalues","Coefficient_of_determination")#
+		cat("\n")#
+		cat("PCPS curve null:\n")#
+		print(as.matrix(resN))#
+	}#
+	invisible(x)#
+}
+res_curve
+x<-res_curve#
+print.pcps.curve<-function(x, ...){#
+	cat("Call:\n")#
+	cat(deparse(x$call), "\n\n")#
+	cat("PCPS curve observed:\n")#
+	res<-as.matrix(x$curve.obs)#
+	print(res)#
+	if(!is.null(x$curve.null)){#
+		N<-length(x$curve.null)#
+		X<-matrix(NA,N,dim(x$curve.obs)[1])#
+		Y<-X#
+		for(i in 1:N){#
+			X[i,]<-x$curve.null[[i]][,1]#
+			Y[i,]<-x$curve.null[[i]][,2]#
+		}#
+		mean_X<-apply(X,2,mean,na.rm=T)#
+		mean_Y<-apply(Y,2,mean,na.rm=T)#
+		resN<-cbind(mean_X,mean_Y)#
+		rownames(resN)=rownames(res)#
+		colnames(resN)=c("Cumulative_PCPS_eigenvalues","Coefficient_of_determination")#
+		cat("\n")#
+		cat("Mean PCPS curve null:\n")#
+		print(as.matrix(resN))#
+	}#
+	invisible(x)#
+}
+res_curve
