@@ -21,6 +21,7 @@ pcps.sig<-function(comm, dist.spp, envir, method = "bray", squareroot = TRUE, fo
 	f_obs<-summary.lm(mod_obs)$fstatistic[1]
 	y_name<-substr(formula,1,gregexpr("~",formula)[[1]][1]-1)
 	res_F_null<-matrix(NA,runs,1)
+	res_F_null_2<-matrix(NA,runs,1)
 		for(k in 1:runs){
 			dist_null<-taxaShuffle(dis)
 			match.names <- match(colnames(comm), colnames(dist_null))
@@ -39,7 +40,13 @@ pcps.sig<-function(comm, dist.spp, envir, method = "bray", squareroot = TRUE, fo
 			data_null<-as.data.frame(cbind(vector_null,envir))
 			mod_null<-glm(formula,data=data_null)
 			res_F_null[k,]<-summary.lm(mod_null)$fstatistic[1]
+			data_null_2<-cbind(sample(data_obs[,y_name]))
+			colnames(data_null_2)=y_name
+			data_null_2<-as.data.frame(cbind(data_null_2,envir))
+			mod_null_2<-glm(formula,data=data_null_2,family=family)
+			res_F_null_2[k,]<-summary.lm(mod_null_2)$fstatistic[1]
 		}
 	p<-(sum(ifelse(res_F_null>=f_obs,1,0))+1)/(runs+1)
-return(list(model=mod_obs, Envir_class=envir_class,formula=formula, f.obs=f_obs,p=p))
+	p_2<-(sum(ifelse(res_F_null_2>=f_obs,1,0))+1)/(runs+1)
+return(list(model=mod_obs, Envir_class=envir_class,formula=formula, f.obs=f_obs,p=p,p2=p_2))
 }
