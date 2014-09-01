@@ -19,7 +19,7 @@ pcps(comm, dist.spp, method = "bray", squareroot = TRUE)
 \method{print}{pcps}(x, ...)
 \method{summary}{pcps}(object, ...)
 \method{scores}{pcps}(x, choices = c(1, 2), ...)
-\method{plot}{pcps}(x, display = c("text", "points"), groups, showlabel = TRUE, ...)
+\method{plot}{pcps}(x, display = c("text", "points"), groups, showlabel = TRUE, choices = c(1, 2), ...)
 }
 
 \arguments{
@@ -39,7 +39,8 @@ pcps(comm, dist.spp, method = "bray", squareroot = TRUE)
 
 The function obtains a matrix containing phylogeny-weighted species composition (\code{\link{matrix.p}}) and is submitted to principal coordinates analysis (PCoA). This method generates the principal coordinates of phylogenetic structure (PCPS) (Duarte, 2011).
 
-The function scores.pcps re-scales the correlation values for \code{\link{biplot}} graphics. The function plot.pcps draws a simple biplot and represent clades as 'spider" graphs (see \code{\link{ordispider}}).
+The function scores.pcps re-scales the correlation values for \code{\link{biplot}} graphics. The function plot.pcps draws a simple biplot and represent clades as "spider"
+ graphs (see \code{\link{ordispider}}).
 }
 
 \value{
