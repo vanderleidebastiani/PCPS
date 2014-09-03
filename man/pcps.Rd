@@ -73,7 +73,7 @@ res<-pcps(flona$community, flona$phylo)
 res
 summary(res)
 scores(res)
-plot(res, display = "text", groups = c(rep(1, 30), rep(2, 29)))
+plot(res, display = "text", groups = c(rep("Clade-A", 30), rep("Clade-B", 29)))
 }
 
 \keyword{PCPS}
