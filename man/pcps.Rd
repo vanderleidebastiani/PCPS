@@ -39,8 +39,7 @@ pcps(comm, dist.spp, method = "bray", squareroot = TRUE)
 
 The function obtains a matrix containing phylogeny-weighted species composition (\code{\link{matrix.p}}) and is submitted to principal coordinates analysis (PCoA). This method generates the principal coordinates of phylogenetic structure (PCPS) (Duarte, 2011).
 
-The function scores.pcps re-scales the correlation values for \code{\link{biplot}} graphics. The function plot.pcps draws a simple biplot and represent clades as "spider"
- graphs (see \code{\link{ordispider}}).
+The function scores.pcps re-scales the correlation values for \code{\link{biplot}} graphics. The function plot.pcps draws a simple biplot and represent clades as "spider" graphs (see \code{\link{ordispider}}).
 }
 
 \value{
@@ -72,7 +71,7 @@ data(flona)
 res<-pcps(flona$community, flona$phylo)
 res
 summary(res)
-scores(res)
+scores.pcps(res)
 plot(res, display = "text", groups = c(rep("Clade-A", 30), rep("Clade-B", 29)))
 }
 
