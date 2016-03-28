@@ -1,4 +1,4 @@
-pcps.curve<-function(comm, dist.spp,trait,method = "bray", squareroot = TRUE,null.model=TRUE,runs=99,progressbar=FALSE){
+pcps.curve<-function(comm, dist.spp, trait, method = "bray", squareroot = TRUE, null.model.ts = FALSE, null.model.bm = FALSE, tree, runs = 99, progressbar = FALSE){
 	dis<-dist.spp
 	m_t_obs<-matrix.t(comm,trait,scale=FALSE,notification=FALSE)$matrix.T
 	ord<-pcps(comm,dis, method = method, squareroot = squareroot)
@@ -21,8 +21,13 @@ pcps.curve<-function(comm, dist.spp,trait,method = "bray", squareroot = TRUE,nul
 	return(result)
 	}
 	curve_obs<-calc.pcpc.curve(values,vectors,m_t_obs)
-	if(null.model){
-		res_curve_null<-vector("list",runs)
+	if(null.model.ts & null.model.bm){
+		BarRuns<-runs*2
+	}else{
+		BarRuns<-runs
+	}
+	if(null.model.ts){
+		res_curve_null_ts<-vector("list",runs)
 		for(k in 1:runs){
 			dist_null<-taxaShuffle(dis)
 			match.names <- match(colnames(comm), colnames(dist_null))
@@ -34,15 +39,37 @@ pcps.curve<-function(comm, dist.spp,trait,method = "bray", squareroot = TRUE,nul
 			ord_null<-pcoa(dist_p_null)
 			values_null<-ord_null$values[,c(1,2,4)]
 			vectors_null<-ord_null$vectors
-			res_curve_null[[k]]<-calc.pcpc.curve(values_null,vectors_null,m_t_obs)
+			res_curve_null_ts[[k]]<-calc.pcpc.curve(values_null,vectors_null,m_t_obs)
 			if(progressbar){
-				ProgressBAR(k,runs,style=3)
+				ProgressBAR(k,BarRuns,style=3)
 			}
 		}
 	}
-	ReTuRn<-list(curve_obs=curve_obs)
-	if(null.model){
-		ReTuRn<-list(curve.obs=curve_obs,curve.null=res_curve_null)	
+	if(null.model.bm){
+		res_curve_null_bm<-vector("list",runs)
+		for(k in 1:runs){
+			trait.null<-cbind(rTraitCont(tree,model="BM"))
+			match.names <- match(colnames(comm),rownames(trait.null))
+			trait.null <- as.matrix(trait.null[match.names,])
+			m_t_null <- matrix.t(comm,trait.null,scale = FALSE, notification = FALSE)$matrix.T
+            res_curve_null_bm[[k]] <- calc.pcpc.curve(values, vectors,m_t_null)
+			if(progressbar){
+				ProgressBAR(k+runs,BarRuns,style=3)
+			}
+		}
+	}
+	if(null.model.ts & null.model.bm){
+		ReTuRn<-list(call= match.call(),curve.obs=curve_obs,curve.null.ts=res_curve_null_ts,curve.null.bm=res_curve_null_bm)	
+	}else{
+	if(null.model.ts){
+		ReTuRn<-list(call= match.call(),curve.obs=curve_obs,curve.null.ts=res_curve_null_ts)
+	} else{
+	if(null.model.bm){
+		ReTuRn<-list(call= match.call(),curve.obs=curve_obs,curve.null.bm=res_curve_null_bm)
+	} else{
+		ReTuRn<-list(call= match.call(),curve.obs=curve_obs)
+	}
+	}
 	}
 	class(ReTuRn) <- "pcpscurve"
 	return(ReTuRn)	
