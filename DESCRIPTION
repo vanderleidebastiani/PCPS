@@ -1,12 +1,12 @@
 Package: PCPS
 Type: Package
-Title: PCPS - Principal Coordinates of Phylogenetic Structure
-Version: 1.0.1
-Date: May 12, 2014
+Title: Principal Coordinates of Phylogenetic Structure
+Version: 1.0.3
+Date: March 28, 2016
 Author: Vanderlei Julio Debastiani
 Maintainer: Vanderlei Julio Debastiani
         <vanderleidebastiani@yahoo.com.br>
-Depends: SYNCSA, vegan
-Imports: ape, picante, phylobase, plotrix
+Depends: SYNCSA
+Imports: ape, picante, phylobase, vegan
 Description: Set of functions for analysis of Principal Coordinates of Phylogenetic Structure (PCPS).
 License: GPL-2 

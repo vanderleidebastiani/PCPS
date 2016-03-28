@@ -3,10 +3,9 @@ exportPattern(".")
 
 # Import all packages listed as Imports or Depends
 import(
-  SYNCSA,
-  vegan
+  SYNCSA
 )
-importFrom(ape, makeNodeLabel, node.depth.edgelength, pcoa)
+importFrom(vegan, vegdist, procrustes, ordispider, wcmdscale, rda, adonis, mantel, ordilabel)
+importFrom(ape, makeNodeLabel, node.depth.edgelength, pcoa, rTraitCont)
 importFrom(picante, randomizeMatrix, taxaShuffle)
 importFrom(phylobase, phylo4, descendants)
-importFrom(plotrix, plotCI)
