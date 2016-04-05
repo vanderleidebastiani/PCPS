@@ -1,3 +1,64 @@
+#' Significant dimensions in principal coordinate analysis
+#'
+#' Function for determine the number of significant dimensions in principal coordinate analysis (PCoA).
+#' 
+#' At each iteration step a bootstrap sample is subjected to PCoA ordination, the scores are submitted 
+#' to a procrustean adjustment, and the correlation between observed and bootstrap ordination scores 
+#' is computed. It compares such correlations to the same parameter generated in a parallel bootstrapped
+#' ordination of randomly permuted data. The number of axes in bootstrap or null PCoA with eigenvectors 
+#' corresponding to positive eigenvalues may be smaller than the number of axes monitored, in this case, 
+#' axes with values equal to 0 are created. The number of iterations with original values for each axis 
+#' is shown in n.permut.bootstrap and n.permut.null. 
+#'
+#' The function scores.pcoasig re-scales the correlation values for \code{\link{biplot}} graphics.
+#'
+#' @encoding UTF-8
+#' @importFrom picante randomizeMatrix
+#' @importFrom vegan procrustes vegdist
+#' @importFrom ape pcoa
+#' @aliases pcoa.sig print.pcoasig summary.pcoasig scores.pcoasig
+#' @param data Community data matrix.
+#' @param dist Dissimilarity index, as accepted by \code{\link{vegdist}} (Default dist="gower").
+#' @param correction Correction methods for negative eigenvalues, as accepted by \code{\link{pcoa}}: 
+#' "lingoes" and "cailliez" (Default correction="none").
+#' @param squareroot Logical argument (TRUE or FALSE) to specify if use square root of dissimilarity 
+#' index (Default squareroot = FALSE).
+#' @param axis Maximum number of ordination principal axes to be monitored (Default axis=6).
+#' @param n.start Initial sample size. One sampling unit is added at each sampling step. If n.start = NULL 
+#' initial sample size is equal to total sample size (Default n.start=NULL).
+#' @param iterations Number of permutations to assess significance (Default iterations=1000).
+#' @param object An object of class pcoasig.
+#' @param x An object of class pcoasig.
+#' @param choices Axes for re-scaling. Choices must have length equal to two (Default choices = c(1,2)).
+#' @param ... Other parameters for the respective functions.
+#' @note \strong{Principal Component Analysis (PCA)}
+#'
+#' You can use the same function to determine the number of significant dimensions in principal component 
+#' analysis (PCA). For this, standardize each variable for zero mean and uni variance (function decostand
+#' and method standardize) and use euclidean distance as dissimilarity index.
+#' 
+#' \strong{Interpretation}
+#' 
+#' If the higher dimension is significant, then all lower dimensions will also be significant. 
+#'
+#' @return \item{PCoA}{PCoA result, exactly as returned for the pcoa function.}  \item{correlations}{Correlations
+#' between axis and original data.} \item{mean.cor.null}{Mean correlations, for axis, between null and reference
+#' scores.} \item{mean.cor.bootstrap}{Mean correlations, for axis, between bootstrap and reference scores.}
+#' \item{cumulative.frequency}{Cumulative frequency in which the null correlations were greater than the bootstrap
+#' correlation.} \item{n.permut.bootstrap}{Number of iterations for each axis in bootstrap step.}
+#' \item{n.permut.null}{Number of iterations for each axis in null step.} \item{probabilities}{Probabilities for each axis.}
+#' @author Vanderlei Julio Debastiani <vanderleidebastiani@@yahoo.com.br>
+#' @seealso \code{\link{pcoa}}, \code{\link{procrustes}} 
+#' @references Pillar, V.D. (1999). The bootstrapped ordination reexamined. Journal of Vegetation Science 10, 895-902.
+#' @keywords PCPS
+#' @examples
+#'
+#' data(flona)
+#' res<-pcoa.sig(flona$community, axis = 6, dist = "bray", iterations = 100)
+#' res
+#'summary(res)
+#'
+#' @export
 pcoa.sig<-function (data, dist = "gower", correction = "none", squareroot = FALSE, 
     n.start = NULL, axis = 6, iterations = 1000) 
 {
@@ -14,11 +75,11 @@ pcoa.sig<-function (data, dist = "gower", correction = "none", squareroot = FALS
         stop("\n n.start must be lower than the number of sampling units\n")
     }
     table.row <- (n.row - n.start) + 1
-    dist.ref <- vegdist(data, method = dist)
+    dist.ref <- vegan::vegdist(data, method = dist)
     if (squareroot == TRUE) {
         dist.ref <- sqrt(dist.ref)
     }
-    pco.ref <- pcoa(dist.ref, correction = correction)
+    pco.ref <- ape::pcoa(dist.ref, correction = correction)
     n.axis.ref <- dim(pco.ref$vectors)[2]
     if (axis > n.axis.ref) {
         stop("\n axis must be lower than the number of axis with positive eigenvalues in reference ordination\n")
@@ -66,11 +127,11 @@ pcoa.sig<-function (data, dist = "gower", correction = "none", squareroot = FALS
         for (i in 1:iterations) {
             sam <- sample(1:n.row, r, replace = TRUE)
             permut <- data[sam, 1:n.col]
-            dist.permut <- vegdist(permut, method = dist)
+            dist.permut <- vegan::vegdist(permut, method = dist)
             if (squareroot == TRUE) {
                 dist.permut <- sqrt(dist.permut)
             }
-            vectors.permut <- pcoa(dist.permut, correction = correction)$vectors
+            vectors.permut <- ape::pcoa(dist.permut, correction = correction)$vectors
             eixo <- axis
             if (!(dim(vectors.permut)[2] >= axis)) {
                 n.number <- abs(dim(vectors.permut)[2] - axis)
@@ -81,7 +142,7 @@ pcoa.sig<-function (data, dist = "gower", correction = "none", squareroot = FALS
             }
             matrix.1[i, c(1:eixo)] <- 1
             for (l in 1:axis) {
-                procrustes.scor <- procrustes(pco.ref$vectors[sam, 
+                procrustes.scor <- vegan::procrustes(pco.ref$vectors[sam, 
                   1:l], vectors.permut[, 1:l], choices=1:l)
                 fit.procrustes <- fitted(procrustes.scor, truemean = TRUE)
                 matrix.permut[i, l] <- as.numeric(cor(pco.ref$vectors[sam, 
@@ -91,21 +152,21 @@ pcoa.sig<-function (data, dist = "gower", correction = "none", squareroot = FALS
         matrix.randon <- matrix(NA, nrow = iterations, ncol = axis)
         matrix.2 <- matrix(NA, nrow = iterations, ncol = axis)
         for (j in 1:iterations) {
-            randon <- t(randomizeMatrix(t(data), null.model = "richness"))
-            dist.random.ref <- vegdist(randon, method = dist)
+            randon <- t(picante::randomizeMatrix(t(data), null.model = "richness"))
+            dist.random.ref <- vegan::vegdist(randon, method = dist)
             if (squareroot == TRUE) {
                 dist.random.ref <- sqrt(dist.random.ref)
             }
-            pco.randon.ref <- pcoa(dist.random.ref, correction = correction)
+            pco.randon.ref <- ape::pcoa(dist.random.ref, correction = correction)
             n.col.randon <- dim(randon)[2]
             n.row.randon <- dim(randon)[1]
             sam.randon <- sample(1:n.row.randon, r, replace = TRUE)
             permut.randon <- randon[sam.randon, 1:n.col.randon]
-            dist.permut.randon <- vegdist(permut.randon, method = dist)
+            dist.permut.randon <- vegan::vegdist(permut.randon, method = dist)
             if (squareroot == TRUE) {
                 dist.permut.randon <- sqrt(dist.permut.randon)
             }
-            vectors.permut.randon <- pcoa(dist.permut.randon, 
+            vectors.permut.randon <- ape::pcoa(dist.permut.randon, 
                 correction = correction)$vectors
             eixo <- axis
             if (!(dim(vectors.permut.randon)[2] >= axis)) {
@@ -119,7 +180,7 @@ pcoa.sig<-function (data, dist = "gower", correction = "none", squareroot = FALS
             }
             matrix.2[j, c(1:eixo)] <- 1
             for (m in 1:axis) {
-                procrustes.scor.randon <- procrustes(pco.randon.ref$vectors[sam.randon, 
+                procrustes.scor.randon <- vegan::procrustes(pco.randon.ref$vectors[sam.randon, 
                   1:m], vectors.permut.randon[, 1:m],choices=1:m)
                 fit.procrustes.randon <- fitted(procrustes.scor.randon, 
                   truemean = TRUE)

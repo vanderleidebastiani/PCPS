@@ -1,3 +1,6 @@
+#' @rdname pcps
+#' @encoding UTF-8
+#' @export
 print.pcps<-function(x , ...){
 	cat("Call:\n")
 	cat(deparse(x$call), "\n\n")

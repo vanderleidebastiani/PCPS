@@ -1,3 +1,6 @@
+#' @rdname pcps.curve
+#' @encoding UTF-8
+#' @export
 summary.pcpscurve<-function(object,probs=c(0.025,0.975),...){
     res<-list()
     res$call<-object$call

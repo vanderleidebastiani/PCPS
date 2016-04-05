@@ -1,3 +1,6 @@
+#' @rdname pcps
+#' @encoding UTF-8
+#' @export
 summary.pcps<-function(object, ...){
     res<-list()
     res$values<-object$values

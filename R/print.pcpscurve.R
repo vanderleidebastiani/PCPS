@@ -1,3 +1,6 @@
+#' @rdname pcps.curve
+#' @encoding UTF-8
+#' @export
 print.pcpscurve<-function(x, ...){
 	res<-summary(x)
 	cat("Call:\n")

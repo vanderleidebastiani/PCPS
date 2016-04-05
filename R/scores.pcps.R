@@ -1,3 +1,7 @@
+#' @rdname pcps
+#' @encoding UTF-8
+#' @method scores pcps
+#' @export
 scores.pcps<-function(x, choices=c(1,2), ...){
 	if (length(choices) != 2) {
         stop("\n Choices must have length equal to two \n")

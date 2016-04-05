@@ -1,3 +1,6 @@
+#' @rdname pcoa.sig
+#' @encoding UTF-8
+#' @export
 summary.pcoasig<-function(object, ...){
     res<-list()
     res$call<-object$call

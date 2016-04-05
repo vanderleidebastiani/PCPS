@@ -1,3 +1,7 @@
+#' @rdname pcoa.sig
+#' @encoding UTF-8
+#' @method scores pcoasig
+#' @export
 scores.pcoasig<-function (x, choices=c(1,2), ...) 
 {
 	if (length(choices) != 2) {

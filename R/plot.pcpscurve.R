@@ -1,3 +1,6 @@
+#' @rdname pcps.curve
+#' @encoding UTF-8
+#' @export
 plot.pcpscurve<-function(x,type="b", draw.model=c("none","ts","bm"),probs=c(0.025,0.975),col="black",model.col="black",...){
 	if (length(draw.model) > 1) {
 		stop("\n Only one argument is accepted in draw.model \n")
