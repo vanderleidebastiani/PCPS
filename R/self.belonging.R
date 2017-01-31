@@ -28,11 +28,11 @@
 #' @keywords PCPS
 #' @examples
 #' 
-#' data(flona)
-#' self.belonging(flona$phylo)
+#' data(ADRS)
+#' self.belonging(ADRS$phylo)
 #' 
 #' @export
-self.belonging<-function (dis,standardize=TRUE){
+self.belonging<-function (dis, standardize = TRUE){
 	diag.matrix<-diag(belonging(dis,standardize=standardize))
 	return(diag.matrix)
 }

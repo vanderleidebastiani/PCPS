@@ -1,10 +1,26 @@
 #' @rdname pcps
 #' @encoding UTF-8
 #' @export
-summary.pcps<-function(object, ...){
-    res<-list()
-    res$values<-object$values
-    res$vectors<-object$vectors
-    res$correlations<-object$correlations
+summary.pcps<-function(object, choices = c(1, 2), ...){
+    #res<-list()
+    res<-object
+    if (length(choices) != 2) {
+      stop("\n Choices must have length equal to two \n")
+    }
+    # res$call<-object$call
+    # res$values<-object$values
+    # res$vectors<-object$vectors
+    # res$correlations<-object$correlations
+    # res$P<-object$P
+    max1<-max(object$vectors[, choices[1]])
+    max2<-max(object$vectors[, choices[2]])
+    min1<-min(object$vectors[, choices[1]])
+    min2<-min(object$vectors[, choices[2]])
+    scores1<-ifelse(object$correlations[,choices[1]]>0, object$correlations[,choices[1]]*max1, object$correlations[,choices[1]]*abs(min1))
+    scores2<-ifelse(object$correlations[,choices[2]]>0, object$correlations[,choices[2]]*max2, object$correlations[,choices[2]]*abs(min2))
+    rscores<-data.frame(scores1, scores2)
+    colnames(rscores)<-colnames(object$vectors[, choices])
+    res$scores<-list(scores.sites = object$vectors[, choices], scores.species = rscores)
+    class(res)<-"summarypcps"
     return(res)
 }

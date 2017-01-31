@@ -16,20 +16,24 @@
 #' @importFrom picante randomizeMatrix
 #' @importFrom vegan procrustes vegdist
 #' @importFrom ape pcoa
-#' @aliases pcoa.sig print.pcoasig summary.pcoasig scores.pcoasig
+#' @importFrom stats fitted
+#' @aliases pcoa.sig print.pcoasig summary.pcoasig print.summarypcoasig
 #' @param data Community data matrix.
-#' @param dist Dissimilarity index, as accepted by \code{\link{vegdist}} (Default dist="gower").
-#' @param correction Correction methods for negative eigenvalues, as accepted by \code{\link{pcoa}}: 
-#' "lingoes" and "cailliez" (Default correction="none").
+#' @param dist Dissimilarity index, as accepted by \code{\link{vegdist}} (Default dist = "gower").
 #' @param squareroot Logical argument (TRUE or FALSE) to specify if use square root of dissimilarity 
 #' index (Default squareroot = FALSE).
-#' @param axis Maximum number of ordination principal axes to be monitored (Default axis=6).
-#' @param n.start Initial sample size. One sampling unit is added at each sampling step. If n.start = NULL 
-#' initial sample size is equal to total sample size (Default n.start=NULL).
-#' @param iterations Number of permutations to assess significance (Default iterations=1000).
+#' @param axis Maximum number of ordination principal axes to be monitored (Default axis = 6).
+#' @param n.start Initial sample size. If n.start = NULL 
+#' initial sample size is equal to total sample size (Default n.start = NULL).
+#' @param by Sampling unit is added at each sampling step (Default by = 1). 
+#' @param iterations Number of permutations to assess significance (Default iterations = 1000).
+#' @param parallel Number of parallel processes.  Tip: use detectCores() (Default parallel = NULL).
+#' @param newClusters Logical argument (TRUE or FALSE) to specify if make new parallel 
+#' processes or use predefined socket cluster. Only if parallel is different of NULL (Default newClusters = TRUE).
+#' @param CL A predefined socket cluster done with parallel package.
 #' @param object An object of class pcoasig.
 #' @param x An object of class pcoasig.
-#' @param choices Axes for re-scaling. Choices must have length equal to two (Default choices = c(1,2)).
+#' @param choices Axes for re-scaling. Choices must have length equal to two (Default choices = c(1, 2)).
 #' @param ... Other parameters for the respective functions.
 #' @note \strong{Principal Component Analysis (PCA)}
 #'
@@ -41,11 +45,11 @@
 #' 
 #' If the higher dimension is significant, then all lower dimensions will also be significant. 
 #'
-#' @return \item{PCoA}{PCoA result, exactly as returned for the pcoa function.}  \item{correlations}{Correlations
+#' @return \item{value}{The eigenvalues, relative eigenvalues and cumulative relative eigenvalues..} 
+#' \item{vectors}{The principal coordinates.} \item{correlations}{Correlations
 #' between axis and original data.} \item{mean.cor.null}{Mean correlations, for axis, between null and reference
 #' scores.} \item{mean.cor.bootstrap}{Mean correlations, for axis, between bootstrap and reference scores.}
-#' \item{cumulative.frequency}{Cumulative frequency in which the null correlations were greater than the bootstrap
-#' correlation.} \item{n.permut.bootstrap}{Number of iterations for each axis in bootstrap step.}
+#' \item{n.permut.bootstrap}{Number of iterations for each axis in bootstrap step.}
 #' \item{n.permut.null}{Number of iterations for each axis in null step.} \item{probabilities}{Probabilities for each axis.}
 #' @author Vanderlei Julio Debastiani <vanderleidebastiani@@yahoo.com.br>
 #' @seealso \code{\link{pcoa}}, \code{\link{procrustes}} 
@@ -54,164 +58,143 @@
 #' @examples
 #'
 #' data(flona)
-#' res<-pcoa.sig(flona$community, axis = 6, dist = "bray", iterations = 100)
+#' res<-pcoa.sig(flona$community, dist = "bray", squareroot = FALSE, axis = 6, iterations = 100)
 #' res
 #'summary(res)
 #'
 #' @export
-pcoa.sig<-function (data, dist = "gower", correction = "none", squareroot = FALSE, 
-    n.start = NULL, axis = 6, iterations = 1000) 
-{
-    data <- as.matrix(data)
-    colnames(data) <- colnames(data, do.NULL = FALSE, prefix = "V.")
-    rownames(data) <- rownames(data, do.NULL = FALSE, prefix = "")
-    n.row <- dim(data)[1]
-    n.col <- dim(data)[2]
-    n.start <- n.start
-    if (is.null(n.start)) {
-        n.start <- n.row
-    }
-    if (n.start > n.row) {
-        stop("\n n.start must be lower than the number of sampling units\n")
-    }
-    table.row <- (n.row - n.start) + 1
-    dist.ref <- vegan::vegdist(data, method = dist)
-    if (squareroot == TRUE) {
-        dist.ref <- sqrt(dist.ref)
-    }
-    pco.ref <- ape::pcoa(dist.ref, correction = correction)
-    n.axis.ref <- dim(pco.ref$vectors)[2]
-    if (axis > n.axis.ref) {
-        stop("\n axis must be lower than the number of axis with positive eigenvalues in reference ordination\n")
-    }
-    if (axis > n.start) {
-        stop("\n n.start must be higher than the number of axis monitored\n")
-    }
-    correlations <- matrix(NA, nrow = n.col, ncol = n.axis.ref)
-    for (i in 1:n.col) {
-        for (j in 1:n.axis.ref) {
-            correlations[i, j] <- cor(data[, i], pco.ref$vectors[, 
-                j])
-        }
-    }
-    colnames(correlations) <- colnames(pco.ref$vectors)
-    rownames(correlations) <- colnames(data, do.NULL = FALSE, 
-        prefix = "Uni.")
-    mean.cor.null <- matrix(NA, nrow = table.row, ncol = axis)
-    mean.cor.bootstrap <- matrix(NA, nrow = table.row, ncol = axis)
-    cumulative.frequency <- matrix(NA, nrow = table.row, ncol = axis)
-    probabilities <- matrix(NA, nrow = table.row, ncol = axis)
-    n.permut <- matrix(NA, nrow = table.row, ncol = axis)
-    n.randon <- matrix(NA, nrow = table.row, ncol = axis)
-    colnames(mean.cor.null) <- colnames(mean.cor.null, do.NULL = FALSE, 
-        prefix = "Axis.")
-    colnames(mean.cor.bootstrap) <- colnames(mean.cor.bootstrap, 
-        do.NULL = FALSE, prefix = "Axis.")
-    colnames(cumulative.frequency) <- colnames(cumulative.frequency, 
-        do.NULL = FALSE, prefix = "Axis.")
-    colnames(probabilities) <- colnames(probabilities, do.NULL = FALSE, 
-        prefix = "Axis.")
-    colnames(n.permut) <- colnames(n.permut, do.NULL = FALSE, 
-        prefix = "Axis.")
-    colnames(n.randon) <- colnames(n.randon, do.NULL = FALSE, 
-        prefix = "Axis.")
-    rownames(mean.cor.null) <- as.vector(n.start:n.row)
-    rownames(mean.cor.bootstrap) <- as.vector(n.start:n.row)
-    rownames(cumulative.frequency) <- as.vector(n.start:n.row)
-    rownames(probabilities) <- as.vector(n.start:n.row)
-    rownames(n.permut) <- as.vector(n.start:n.row)
-    rownames(n.randon) <- as.vector(n.start:n.row)
-    for (r in n.start:n.row) {
-        matrix.permut <- matrix(NA, nrow = iterations, ncol = axis)
-        matrix.1 <- matrix(NA, nrow = iterations, ncol = axis)
-        for (i in 1:iterations) {
-            sam <- sample(1:n.row, r, replace = TRUE)
-            permut <- data[sam, 1:n.col]
-            dist.permut <- vegan::vegdist(permut, method = dist)
-            if (squareroot == TRUE) {
-                dist.permut <- sqrt(dist.permut)
-            }
-            vectors.permut <- ape::pcoa(dist.permut, correction = correction)$vectors
-            eixo <- axis
-            if (!(dim(vectors.permut)[2] >= axis)) {
-                n.number <- abs(dim(vectors.permut)[2] - axis)
-                eixo <- dim(vectors.permut)[2]
-                vectors.permut <- cbind(vectors.permut, matrix(rep(0, 
-                  dim(vectors.permut)[1] * n.number), nrow = dim(vectors.permut)[1], 
-                  ncol = n.number))
-            }
-            matrix.1[i, c(1:eixo)] <- 1
-            for (l in 1:axis) {
-                procrustes.scor <- vegan::procrustes(pco.ref$vectors[sam, 
-                  1:l], vectors.permut[, 1:l], choices=1:l)
-                fit.procrustes <- fitted(procrustes.scor, truemean = TRUE)
-                matrix.permut[i, l] <- as.numeric(cor(pco.ref$vectors[sam, 
-                  l], fit.procrustes[, l]))
-            }
-        }
-        matrix.randon <- matrix(NA, nrow = iterations, ncol = axis)
-        matrix.2 <- matrix(NA, nrow = iterations, ncol = axis)
-        for (j in 1:iterations) {
-            randon <- t(picante::randomizeMatrix(t(data), null.model = "richness"))
-            dist.random.ref <- vegan::vegdist(randon, method = dist)
-            if (squareroot == TRUE) {
-                dist.random.ref <- sqrt(dist.random.ref)
-            }
-            pco.randon.ref <- ape::pcoa(dist.random.ref, correction = correction)
-            n.col.randon <- dim(randon)[2]
-            n.row.randon <- dim(randon)[1]
-            sam.randon <- sample(1:n.row.randon, r, replace = TRUE)
-            permut.randon <- randon[sam.randon, 1:n.col.randon]
-            dist.permut.randon <- vegan::vegdist(permut.randon, method = dist)
-            if (squareroot == TRUE) {
-                dist.permut.randon <- sqrt(dist.permut.randon)
-            }
-            vectors.permut.randon <- ape::pcoa(dist.permut.randon, 
-                correction = correction)$vectors
-            eixo <- axis
-            if (!(dim(vectors.permut.randon)[2] >= axis)) {
-                n.number.randon <- abs(dim(vectors.permut.randon)[2] - 
-                  axis)
-                eixo <- dim(vectors.permut.randon)[2]
-                vectors.permut.randon <- cbind(vectors.permut.randon, 
-                  matrix(rep(0, dim(vectors.permut.randon)[1] * 
-                    n.number.randon), nrow = dim(vectors.permut.randon)[1], 
-                    ncol = n.number.randon))
-            }
-            matrix.2[j, c(1:eixo)] <- 1
-            for (m in 1:axis) {
-                procrustes.scor.randon <- vegan::procrustes(pco.randon.ref$vectors[sam.randon, 
-                  1:m], vectors.permut.randon[, 1:m],choices=1:m)
-                fit.procrustes.randon <- fitted(procrustes.scor.randon, 
-                  truemean = TRUE)
-                matrix.randon[j, m] <- as.numeric(cor(pco.randon.ref$vectors[sam.randon, 
-                  m], fit.procrustes.randon[, m]))
-            }
-        }
-        matrix.sig <- matrix(NA, nrow = iterations, ncol = axis)
-        for (k in 1:iterations) {
-            for (n in 1:axis) {
-                matrix.sig[k, n] <- ifelse(matrix.randon[k, n] >= 
-                  matrix.permut[k, n], 1, 0)
-            }
-        }
-        mean.permut <- colMeans(matrix.permut)
-        mean.randon <- colMeans(matrix.randon)
-        sig <- colSums(matrix.sig)
-        result <- sig/iterations
-        numero.permut <- colSums(matrix.1, na.rm = TRUE)
-        numero.randon <- colSums(matrix.2, na.rm = TRUE)
-        mean.cor.null[((r - n.start) + 1), ] <- mean.randon
-        mean.cor.bootstrap[((r - n.start) + 1), ] <- mean.permut
-        cumulative.frequency[((r - n.start) + 1), ] <- sig
-        probabilities[((r - n.start) + 1), ] <- result
-        n.permut[((r - n.start) + 1), ] <- numero.permut
-        n.randon[((r - n.start) + 1), ] <- numero.randon
-    }
-    Result <- list(call = match.call(), PCoA = pco.ref, correlations = correlations, 
-        mean.cor.null = mean.cor.null, mean.cor.bootstrap = mean.cor.bootstrap, 
-        cumulative.frequency = cumulative.frequency, n.permut.bootstrap = n.permut, 
-        n.permut.null = n.randon, probabilities = probabilities)
-    class(Result) <- "pcoasig"
-    return(Result)
+pcoa.sig<-function (data, dist = "gower", squareroot = FALSE, axis = 6, n.start = NULL, by = 1, iterations = 1000, parallel = NULL, newClusters = TRUE, CL =  NULL){
+	RES <- list(call = match.call())
+	wcmdscale.org<-function(data, dist, squareroot, eig, correlations, ...){
+		res<-list()
+		data.dist<-vegan::vegdist(data, method = dist)
+		if (squareroot) {
+			data.dist <- sqrt(data.dist)
+		}
+		data.ordi <- vegan::wcmdscale(data.dist, eig = eig, ...)
+		if(eig){
+			res$vectors<-data.ordi$points
+			values<-data.ordi$eig[data.ordi$eig>=0]
+			res$values<-data.frame(Eigenvalue = values, Relative_eig = values/sum(values), Cumul_eig = cumsum(values/sum(values)))
+			if(any(data.ordi$eig<0)){
+				warning("Warning: Negative eigenvalues are present in the decomposition result, but only positive eigenvalues were considered", call. = FALSE)
+			}
+		} else {
+			res$vectors<-data.ordi
+		}
+		colnames(res$vectors)<-paste("Axis.",seq_len(ncol(res$vectors)), sep = "")
+		if(correlations){
+			res.cor<-stats::cor(data, res$vectors)
+			res$correlations<-res.cor
+		}
+	return(res)
+	}
+	data<-as.matrix(data)
+	colnames(data) <- colnames(data, do.NULL = FALSE, prefix = "v.")
+	rownames(data) <- rownames(data, do.NULL = FALSE, prefix = "u")
+	n.row <- nrow(data)
+	n.col <- ncol(data)
+	if (is.null(n.start)) {
+		n.start <- n.row
+	}
+	if (n.start > n.row) {
+		stop("\n n.start must be lower than the number of sampling units\n")
+	}
+	seq.samp<-seq.int(from = n.start, to = n.row, by = by)
+	if(!(((n.row - n.start)/by)%%1==0) & n.row!=n.start){
+		seq.samp<-c(seq.samp, n.row)
+	}
+	table.row <- length(seq.samp)
+	pco.ref<-wcmdscale.org(data, dist = dist, squareroot = squareroot, eig = TRUE, correlations = TRUE)
+	vectors<-pco.ref$vectors[, 1:axis, drop = FALSE]
+	if (axis > ncol(pco.ref$vectors)) {
+		stop("\n axis must be lower than the number of axis with positive eigenvalues in reference ordination\n")
+	}
+	if (axis > n.start) {
+		stop("\n n.start must be higher than the number of axis monitored\n")
+	}
+	mean.cor.null <- matrix(NA, nrow = table.row, ncol = axis, dimnames = list(paste("n.",seq.samp, sep = ""),colnames(vectors)))
+	mean.cor.bootstrap <- matrix(NA, nrow = table.row, ncol = axis, dimnames = list(paste("n.",seq.samp, sep = ""),colnames(vectors)))
+	probabilities <- matrix(NA, nrow = table.row, ncol = axis, dimnames = list(paste("n.",seq.samp, sep = ""),colnames(vectors)))
+	n.permut <- matrix(NA, nrow = table.row, ncol = axis, dimnames = list(paste("n.",seq.samp, sep = ""),colnames(vectors)))
+	n.randon <- matrix(NA, nrow = table.row, ncol = axis, dimnames = list(paste("n.",seq.samp, sep = ""),colnames(vectors)))
+	ptest<-function(r, data, dist, squareroot, axis, vectors){
+		res<-list()
+		matrix.1 <- matrix(1, nrow = 1, ncol = axis)
+		matrix.2 <- matrix(1, nrow = 1, ncol = axis)
+		matrix.permut <- matrix(NA, nrow = 1, ncol = axis)
+		matrix.randon <- matrix(NA, nrow = 1, ncol = axis)
+		n.row<-nrow(data)
+		sam <- sample(1:n.row, r, replace = TRUE)
+		permut <- data[sam, , drop = FALSE]
+		vectors.permut<-wcmdscale.org(permut, dist = dist, squareroot = squareroot, eig = FALSE, correlations = FALSE, k = axis)$vectors
+		if (ncol(vectors.permut) < axis) {
+			n.number <- axis - ncol(vectors.permut)
+			matrix.1[1,(axis-n.number+1):axis]<-0
+			vectors.permut <- cbind(vectors.permut, matrix(0, nrow = nrow(vectors.permut), ncol = n.number))
+		}
+		for (l in 1:axis) {
+			fit.procrustes <- stats::fitted(vegan::procrustes(vectors[sam, 1:l], vectors.permut[, 1:l], choices = 1:l), truemean = TRUE)
+			matrix.permut[1, l] <- cor(vectors[sam, l], fit.procrustes[, l])
+		}
+		res$matrix.permut<-matrix.permut
+		res$matrix.1<-matrix.1
+		randon <- t(picante::randomizeMatrix(t(data), null.model = "richness"))
+		vectors.randon.ref<-wcmdscale.org(randon, dist = dist, squareroot = squareroot, eig = FALSE, correlations = FALSE, k = axis)$vectors
+		sam.randon <- sample(1:n.row, r, replace = TRUE)
+		permut.randon <- randon[sam.randon, ,drop = FALSE]
+		vectors.permut.randon<-wcmdscale.org(permut.randon, dist = dist, squareroot = squareroot, eig = FALSE, correlations = FALSE, k = axis)$vectors
+		if (ncol(vectors.permut.randon) < axis) {
+			n.number.randon <- axis-ncol(vectors.permut.randon)
+			matrix.2[1,(axis-n.number.randon+1):axis]<-0
+			vectors.permut.randon <- cbind(vectors.permut.randon, matrix(0, nrow = nrow(vectors.permut.randon), ncol = n.number.randon))
+		}
+		for (m in 1:axis) {
+			fit.procrustes.randon <- stats::fitted(vegan::procrustes(vectors.randon.ref[sam.randon, 1:m], vectors.permut.randon[, 1:m], choices = 1:m), truemean = TRUE)
+			matrix.randon[1, m] <- cor(vectors.randon.ref[sam.randon, m], fit.procrustes.randon[, m])
+		}
+		res$matrix.2<-matrix.2
+		res$matrix.randon<-matrix.randon
+	return(res)
+	}
+	if(!is.null(CL)){
+		parallel<-length(CL)
+	}
+	if(!is.null(parallel) & newClusters){
+		CL <- parallel::makeCluster(parallel, type = "PSOCK")
+	}
+	m <- 0
+	for (r in seq.samp) {
+		m <- m+1
+		if(is.null(parallel)){
+			res.temp<-vector("list",iterations)
+			for(i in 1:iterations){
+				res.temp[[i]]<-ptest(r,data = data, dist = dist,squareroot = squareroot, axis = axis, vectors = vectors)
+			}
+		} else {
+			res.temp<-parallel::parRapply(CL, matrix(r, iterations, 1), ptest, data = data, dist = dist, squareroot = squareroot, axis = axis, vectors = vectors)
+		}
+		matrix.1<-t(sapply(seq_len(iterations), function(i) res.temp[[i]]$matrix.1))
+		matrix.2<-t(sapply(seq_len(iterations), function(i) res.temp[[i]]$matrix.2))
+		matrix.permut<-t(sapply(seq_len(iterations), function(i) res.temp[[i]]$matrix.permut))
+		matrix.randon<-t(sapply(seq_len(iterations), function(i) res.temp[[i]]$matrix.randon))
+		mean.cor.null[m, ] <- colMeans(matrix.randon)
+		mean.cor.bootstrap[m, ] <- colMeans(matrix.permut)
+		probabilities[m, ] <- colSums(ifelse(matrix.randon >= matrix.permut, 1, 0))/iterations
+		n.permut[m, ] <- colSums(matrix.1)
+		n.randon[m, ] <- colSums(matrix.2)
+	}
+	if(!is.null(parallel) & newClusters){
+		parallel::stopCluster(CL)
+	}
+	RES$values<-pco.ref$values
+	RES$vectors<-pco.ref$vectors
+	RES$correlations<-pco.ref$correlations
+	RES$mean.cor.null<-mean.cor.null
+	RES$mean.cor.bootstrap <- mean.cor.bootstrap
+	RES$probabilities <- probabilities
+	RES$n.permut.bootstrap <- n.permut
+	RES$n.permut.null <- n.randon
+	class(RES) <- "pcoasig"
+	return(RES)
 }

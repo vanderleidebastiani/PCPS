@@ -1,23 +1,26 @@
 #' @rdname pcps
 #' @encoding UTF-8
 #' @export
-plot.pcps<-function(x,display=c("text","points"),groups,showlabel=TRUE,choices=c(1,2),...){
-	sco<-scores.pcps(x,choices = choices)
-	plot(sco$scores.sites,type="n",ylim=c(min(sco$scores.sites[,2],sco$scores.species[,2],na.rm=TRUE)-0.05, max(sco$scores.sites[,2],sco$scores.species[,2],na.rm=TRUE)+0.05),xlim=c(min(sco$scores.sites[,1],sco$scores.species[,1],na.rm=TRUE)-0.05,max(sco$scores.sites[,1],sco$sco[,1],na.rm=TRUE)+0.05),...)
-	if(display=="text"){
-		text(sco$scores.sites,labels=rownames(sco$scores.sites),...) 
+plot.pcps<-function(x, groups, choices = c(1, 2), display = c("text", "points"), showlabel = TRUE, ...){
+	sco<-summary(x, choices = choices)$scores
+	if(length(groups)!=nrow(sco$scores.species)){
+		stop(paste("\n groups must have length equal to number of species. Number of species:", 6,"\n"))
 	}
-	if(display=="points"){
-		points(sco$scores.sites,...)
+	graphics::plot(sco$scores.sites, type = "n", ylim = c(min(sco$scores.sites[,2], sco$scores.species[,2], na.rm = TRUE)-0.05, max(sco$scores.sites[,2], sco$scores.species[,2], na.rm = TRUE)+0.05), xlim = c(min(sco$scores.sites[,1], sco$scores.species[,1], na.rm = TRUE)-0.05, max(sco$scores.sites[,1], sco$sco[,1], na.rm = TRUE)+0.05), ...)
+	if(display == "text"){
+		graphics::text(sco$scores.sites, labels = rownames(sco$scores.sites), ...) 
 	}
-	vegan::ordispider(sco$scores.species,groups=groups,label=showlabel,...)
+	if(display == "points"){
+		graphics::points(sco$scores.sites, ...)
+	}
+	vegan::ordispider(sco$scores.species, groups = groups, label = showlabel, ...)
 	if(showlabel){
 		g1<-ifelse(table(groups)==1,1,0)
 		g1_groups<-names(g1)[g1==1]
 		if(sum(g1)>0){
 			for(i in 1:sum(g1)){
 				position<-which(groups==g1_groups[i])
-				vegan::ordilabel(sco$scores.species[position,],labels=groups[position],...)
+				vegan::ordilabel(sco$scores.species[position,,drop=FALSE], labels = groups[position], ...)
 			}	
 		}
 	}

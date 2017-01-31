@@ -33,7 +33,7 @@ The phylogenetic tree must contain the node labels for the function work. Use th
 \examples{
 
 require(ape)	
-tree<-makeNodeLabel(rcoal(20))
+tree<-makeNodeLabel(rcoal(10))
 clades<-define.clade(tree, threshold = 0.8, method = "threshold")
 clades
 plot.phylo(tree, show.node.label = TRUE)

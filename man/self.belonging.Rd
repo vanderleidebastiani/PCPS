@@ -30,8 +30,8 @@ similarities between i and all other internal nodes connecting it to the root.
 }
 \examples{
 
-data(flona)
-self.belonging(flona$phylo)
+data(ADRS)
+self.belonging(ADRS$phylo)
 
 }
 \author{

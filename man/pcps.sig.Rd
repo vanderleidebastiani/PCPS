@@ -6,19 +6,20 @@
 \alias{pcps.sig}
 \title{Association between phylogeny-weighted species composition and environmental predictors}
 \usage{
-matrix.p.sig(comm, dist.spp, envir, analysis = c("adonis", "mantel"),
+matrix.p.sig(comm, phylodist, envir, analysis = c("adonis", "mantel"),
   method = "bray", squareroot = TRUE, method.envir = "euclidean",
-  runs = 999)
+  runs = 999, parallel = NULL, newClusters = TRUE, CL = NULL)
 
-pcps.sig(comm, dist.spp, envir, analysis = c("glm", "rda"), method = "bray",
-  squareroot = TRUE, formula, family = gaussian, AsFactors = NULL,
-  pcps.choices = c(1, 2, 3, 4), runs = 999)
+pcps.sig(comm, phylodist, envir, analysis = c("glm", "rda"),
+  method = "bray", squareroot = TRUE, formula, family = stats::gaussian,
+  AsFactors = NULL, pcps.choices = c(1, 2, 3, 4), runs = 999,
+  parallel = NULL, newClusters = TRUE, CL = NULL)
 }
 \arguments{
 \item{comm}{Community data, with species as columns and sampling units as rows. This matrix 
 can contain either presence/absence or abundance data.}
 
-\item{dist.spp}{Matrix containing phylogenetic distances between species.}
+\item{phylodist}{Matrix containing phylogenetic distances between species.}
 
 \item{envir}{Environmental variables for each community, with variables as columns and 
 sampling units as rows.}
@@ -36,6 +37,13 @@ dissimilarity index (Default squareroot = TRUE).}
 as accepted by vegdist used in Mantel analysis (Default method.envir = "euclidean")}
 
 \item{runs}{Number of permutations for assessing significance.}
+
+\item{parallel}{Number of parallel processes.  Tip: use detectCores() (Default parallel = NULL).}
+
+\item{newClusters}{Logical argument (TRUE or FALSE) to specify if make new parallel 
+processes or use predefined socket cluster. Only if parallel is different of NULL (Default newClusters = TRUE).}
+
+\item{CL}{A predefined socket cluster done with parallel package.}
 
 \item{formula}{An object of class \code{\link{formula}} quotation marks used in GLM analysis. 
 See Details.}
@@ -98,6 +106,7 @@ pcps.sig(flona$community, flona$phylo, flona$environment, analysis = "glm",
         formula = "pcps.1~alt", runs = 99)
 matrix.p.sig(flona$community,flona$phylo,flona$environment[,2],
         analysis = "adonis", runs=99)
+
 
 }
 \author{

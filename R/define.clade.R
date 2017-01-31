@@ -24,7 +24,7 @@
 #' @examples
 #' 
 #' require(ape)	
-#' tree<-makeNodeLabel(rcoal(20))
+#' tree<-makeNodeLabel(rcoal(10))
 #' clades<-define.clade(tree, threshold = 0.8, method = "threshold")
 #' clades
 #' plot.phylo(tree, show.node.label = TRUE)
@@ -39,8 +39,8 @@ define.clade<-function(tree,threshold,time,method=c("threshold","time")){
 	}
 	tree1<-phylobase::phylo4(tree)
 	NoDes<-ape::node.depth.edgelength(tree) 
-	names(NoDes)=c(tree$tip.label,tree$node.label)
-	NoDes<-NoDes[-match(tree$tip.label,names(NoDes))]
+	names(NoDes)<-c(tree$tip.label, tree$node.label)
+	NoDes<-NoDes[-match(tree$tip.label, names(NoDes))]
 	N1<-length(NoDes)
 	if(method=="threshold"){
 		NoDes2<-NoDes[NoDes/node.depth.edgelength(tree)[1]>=(threshold)]
@@ -50,21 +50,22 @@ define.clade<-function(tree,threshold,time,method=c("threshold","time")){
 		NoDes2<-NoDes[NoDes>=time]
 		height<-time
 	}
-	clades<-vector(length=length(tree$tip.label))	
-	names(clades)=tree$tip.label
-	clades[]=tree$tip.label	
+	clades<-vector(length = length(tree$tip.label))	
+	names(clades)<-tree$tip.label
+	clades[]<-tree$tip.label	
 	N2<-length(NoDes2)
 	if(N1==N2){
-		N2=N2-1
+		N2<-N2-1
 	}
-	n=1
+	n<-1
 	if(!N2==0){
 		for (n in 1:N2){
-			RM=n
-			Descendants<-phylobase::descendants(tree1,names(sort(NoDes,decreasing=T))[RM])
-			NoDe<-names(sort(NoDes,decreasing=T))[RM]
-			clades[Descendants]=NoDe
+			RM<-n
+			Descendants<-phylobase::descendants(tree1, names(sort(NoDes, decreasing = TRUE))[RM])
+			NoDe<-names(sort(NoDes, decreasing = TRUE))[RM]
+			clades[Descendants]<-NoDe
 		}
 	}
-return(list(clades=clades,height=height))
+	res<-list(clades = clades, height = height)
+return(res)
 }

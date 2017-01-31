@@ -1,8 +1,8 @@
 Package: PCPS
 Type: Package
 Title: Principal Coordinates of Phylogenetic Structure
-Version: 1.0.3
-Date: 2016-04-04
+Version: 1.0.4
+Date: 2017-31-01
 Author: Vanderlei Julio Debastiani
 Maintainer: Vanderlei Julio Debastiani <vanderleidebastiani@yahoo.com.br>
 Depends:
@@ -11,7 +11,8 @@ Imports:
     ape,
     picante,
     phylobase,
-    vegan
+    vegan,
+    RcppArmadillo
 Description: Set of functions for analysis of Principal Coordinates of
     Phylogenetic Structure (PCPS).
 License: GPL-2

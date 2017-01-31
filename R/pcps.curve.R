@@ -14,17 +14,22 @@
 #' simulate traits evolving under Brownian motion model. 
 #'
 #' @encoding UTF-8
-#' @importFrom picante taxaShuffle
-#' @importFrom ape pcoa rTraitCont
+#' @importFrom ape rTraitCont
 #' @importFrom vegan vegdist
+#' @importFrom stats quantile
+#' @importFrom RcppArmadillo fastLm
+#' @importFrom graphics plot points segments
+#' @importFrom parallel makeCluster clusterExport clusterApply stopCluster
 #' @aliases pcps.curve print.pcpscurve summary.pcpscurve plot.pcpscurve
 #' @param comm Community data, with species as columns and sampling units as rows. This 
 #' matrix can contain either presence/absence or abundance data.
-#' @param dist.spp Matrix containing phylogenetic distances between species.
+#' @param phylodist Matrix containing phylogenetic distances between species.
 #' @param trait Matrix data of species described by traits, with traits as columns and species as rows.
 #' @param method Dissimilarity index, as accepted by \code{\link{vegdist}} (Default dist = "bray").
 #' @param squareroot Logical argument (TRUE or FALSE) to specify if use square root of dissimilarity
 #' index (Default squareroot = TRUE).
+#' @param ranks Logical argument (TRUE or FALSE) to specify if ordinal variables are 
+#' convert to ranks (Default ranks = TRUE).
 #' @param null.model.ts Logical argument (TRUE or FALSE) to specify if use null model that shuffles
 #' terminal tips across the phylogenetic tree to generate null curves. See details (Default null.model.ts = FALSE).
 #' @param null.model.bm Logical argument (TRUE or FALSE) to specify if use null model that simulate 
@@ -33,6 +38,13 @@
 #' @param runs Number of randomizations.
 #' @param progressbar Logical argument (TRUE or FALSE) to specify if display a progress bar 
 #' on the R console (Default progressbar = FALSE).
+#' @param parallel Number of parallel processes.  Tip: use detectCores() (Default parallel = NULL).
+#' @param newClusters Logical argument (TRUE or FALSE) to specify if make new parallel 
+#' processes or use predefined socket cluster. Only if parallel is different of NULL (Default newClusters = TRUE).
+#' @param CL A predefined socket cluster done with parallel package.
+#' @param values The eigenvalues, relative eigenvalues and cumulative relative eigenvalues returned by \code{\link{pcps}}. 
+#' @param vectors The principal coordinates of phylogenetic structure returned by \code{\link{pcps}}.
+#' @param mt Matrix containing trait average at community level for one trait.
 #' @param object An object of class pcpscurve.
 #' @param x An object of class pcpscurve.
 #' @param probs Numeric vector of probabilities used by \code{\link{quantile}}. (Default probs = c(0.025, 0.975)).
@@ -53,86 +65,84 @@
 #' @examples
 #' 
 #' data(flona)
-#' res_curve<-pcps.curve(flona$community, flona$phylo, flona$trait[,1], method = "bray",
-#'        squareroot = TRUE, null.model.ts = TRUE, runs = 9, progressbar = FALSE)
-#' res_curve
-#' summary(res_curve)
-#' plot(res_curve, type = "b", draw.model = "ts", col = "red")
+#' res<-pcps.curve(flona$community, flona$phylo, flona$trait[,1,drop = FALSE], 
+#'        null.model.ts = TRUE, runs = 9)
+#' res
+#' summary(res)
+#' plot(res, draw.model = "ts", type = "b", col = "red")
 #'
 #' @export
-pcps.curve<-function(comm, dist.spp, trait, method = "bray", squareroot = TRUE, null.model.ts = FALSE, null.model.bm = FALSE, tree, runs = 99, progressbar = FALSE){
-	dis<-dist.spp
-	m_t_obs<-matrix.t(comm,trait,scale=FALSE,notification=FALSE)$matrix.T
-	ord<-pcps(comm,dis, method = method, squareroot = squareroot)
-	values<-ord$values
-	vectors<-ord$vectors
-	calc.pcpc.curve<-function(values,vectors,matrixT){
-		use<-1:(dim(vectors)[2])
-		x<-vectors[,use]
-		y<-matrixT[,1]
-		fac<-length(use)
-		xnam <- paste("x[,", 1:fac,"]", sep="")
-		res.y<-matrix(NA,nrow=fac,ncol=1)
-		for (j in 1:fac){
-			res.y[j,1]<-as.numeric(summary(lm(as.formula(paste("y ~ ", paste(xnam[1:j], collapse= "+")))))$r.squared)
-		}	
-		colnames(res.y)="Coefficient_of_determination"
-		res.x<-as.matrix(values[1:fac,3])
-		colnames(res.x)="Cumulative_PCPS_eigenvalues"
-		result<-cbind(res.x,res.y)
-	return(result)
+pcps.curve<-function(comm, phylodist, trait, method = "bray", squareroot = TRUE, ranks = TRUE, null.model.ts = FALSE, null.model.bm = FALSE, tree, runs = 99, progressbar = FALSE, parallel = NULL, newClusters = TRUE, CL =  NULL){
+	RES<-list(call= match.call())
+	if(ncol(trait)!=1){
+		stop("\n Only one trait is allowed\n")
 	}
-	curve_obs<-calc.pcpc.curve(values,vectors,m_t_obs)
-	if(null.model.ts & null.model.bm){
-		BarRuns<-runs*2
-	}else{
-		BarRuns<-runs
+	MT<-SYNCSA::matrix.t(comm, trait, scale = FALSE, ranks = ranks, notification = FALSE)$matrix.T
+	res.pcps<-pcps(comm, phylodist, method = method, squareroot = squareroot, correlations = FALSE)
+	res.values<-res.pcps$values
+	res.vectors<-res.pcps$vectors
+	curve.obs<-pcpc.curve.calc(res.values,res.vectors,MT)
+	rownames(curve.obs)<-rownames(res.values)
+	RES$curve.obs<-curve.obs
+	if(progressbar){
+		if(null.model.ts & null.model.bm){
+			BarRuns<-runs*2
+		}else{
+			BarRuns<-runs
+		}
 	}
+	if(!is.null(CL)){
+		parallel<-length(CL)
+	}
+	ptest.ts<-function(samp, comm, phylodist, method, squareroot, mt){
+		pcps.null<-PCPS::pcps(comm, phylodist[samp, samp], method = method, squareroot = squareroot, correlations = FALSE)
+		res<-PCPS::pcpc.curve.calc(pcps.null$values, pcps.null$vectors, mt)
+		return(res)
+	}
+	ptest.bm<-function(samp, tree, comm, values, vectors, ranks){
+		trait.null<-cbind(ape::rTraitCont(phy = tree, model = "BM"))
+		match.names <- match(colnames(comm), rownames(trait.null))
+		MT.null <- SYNCSA::matrix.t(comm, trait.null[match.names,,drop = FALSE], scale = FALSE, ranks = ranks, notification = FALSE)$matrix.T
+        res <- PCPS::pcpc.curve.calc(values, vectors, MT.null)
+		return(res)
+	}
+	if((null.model.ts | null.model.bm) & !is.null(parallel) & newClusters){
+		CL <- parallel::makeCluster(parallel, type = "PSOCK")
+	}	
 	if(null.model.ts){
-		res_curve_null_ts<-vector("list",runs)
-		for(k in 1:runs){
-			dist_null<-picante::taxaShuffle(dis)
-			match.names <- match(colnames(comm), colnames(dist_null))
-			m_p_null<-matrix.p(comm,as.matrix(dist_null[match.names, match.names]))$matrix.P
-			dist_p_null <- vegan::vegdist(m_p_null, method = method)
-		    if (squareroot == TRUE) {
-    		    dist_p_null <- sqrt(dist_p_null)
+		seqpermutation <- SYNCSA::permut.vector(ncol(phylodist), nset = runs)
+		seqpermutation <- lapply(seq_len(nrow(seqpermutation)), function(i) seqpermutation[i,])
+		if(is.null(parallel)){
+	    	res.curve.null.ts<-vector("list",runs)
+		    for (i in 1:runs) {
+	    	    res.curve.null.ts[[i]] <- ptest.ts(samp = seqpermutation[[i]], comm = comm, phylodist = phylodist, method = method, squareroot = squareroot, mt = MT)   
+	    	    if(progressbar){
+					SYNCSA::ProgressBAR(i,BarRuns,style=3)
+				}
     		}
-			ord_null<-ape::pcoa(dist_p_null)
-			values_null<-ord_null$values[,c(1,2,4)]
-			vectors_null<-ord_null$vectors
-			res_curve_null_ts[[k]]<-calc.pcpc.curve(values_null,vectors_null,m_t_obs)
-			if(progressbar){
-				ProgressBAR(k,BarRuns,style=3)
-			}
-		}
+		} else {
+			res.curve.null.ts <- parallel::clusterApply(CL, seqpermutation, ptest.ts, comm = comm, phylodist = phylodist, method = method, squareroot = squareroot, mt = MT)		
+		}	
+		RES$curve.null.ts<-res.curve.null.ts
 	}
 	if(null.model.bm){
-		res_curve_null_bm<-vector("list",runs)
-		for(k in 1:runs){
-			trait.null<-cbind(ape::rTraitCont(tree,model="BM"))
-			match.names <- match(colnames(comm),rownames(trait.null))
-			trait.null <- as.matrix(trait.null[match.names,])
-			m_t_null <- matrix.t(comm,trait.null,scale = FALSE, notification = FALSE)$matrix.T
-            res_curve_null_bm[[k]] <- calc.pcpc.curve(values, vectors,m_t_null)
-			if(progressbar){
-				ProgressBAR(k+runs,BarRuns,style=3)
-			}
+		seqpermutation<-vector("list",runs)
+		if(is.null(parallel)){
+			res.curve.null.bm<-vector("list",runs)
+		    for (i in 1:runs) {
+	    	    res.curve.null.bm[[i]] <- ptest.bm(NULL, tree, comm, res.values, res.vectors, ranks = ranks)
+	    	    if(progressbar){
+					SYNCSA::ProgressBAR(i+runs,BarRuns,style=3)
+				}
+    		}
+		} else {
+			res.curve.null.bm <- parallel::clusterApply(CL, seqpermutation, ptest.bm, tree = tree, comm = comm, values = res.values, vectors = res.vectors, ranks = ranks)		
 		}
+		RES$curve.null.bm<-res.curve.null.bm
 	}
-	if(null.model.ts & null.model.bm){
-		ReTuRn<-list(call= match.call(),curve.obs=curve_obs,curve.null.ts=res_curve_null_ts,curve.null.bm=res_curve_null_bm)	
-	}else{
-	if(null.model.ts){
-		ReTuRn<-list(call= match.call(),curve.obs=curve_obs,curve.null.ts=res_curve_null_ts)
-	} else{
-	if(null.model.bm){
-		ReTuRn<-list(call= match.call(),curve.obs=curve_obs,curve.null.bm=res_curve_null_bm)
-	} else{
-		ReTuRn<-list(call= match.call(),curve.obs=curve_obs)
+	if((null.model.ts | null.model.bm) & !is.null(parallel) & newClusters){
+		parallel::stopCluster(CL)
 	}
-	}
-	}
-	class(ReTuRn) <- "pcpscurve"
-	return(ReTuRn)	
+	class(RES) <- "pcpscurve"
+	return(RES)	
 }
