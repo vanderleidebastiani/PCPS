@@ -53,7 +53,7 @@ between each PCPS and each species in matrix P (Default correlations = TRUE).}
 \item{P}{Phylogeny-weighted species composition matrix.} \item{values}{The eigenvalues, 
 relative eigenvalues and cumulative relative eigenvalues.} \item{vectors}{The principal coordinates
 of phylogenetic structure (PCPS).} \item{correlations}{Correlations between a PCPS axis and 
-phylogenetically weighted species abundances or frequencies.}
+phylogenetically weighted species abundances or frequencies.} \item{scores}{Scores for biplot graphics.}
 }
 \description{
 Function to generate Principal Coordinates of Phylogenetic Structure (PCPS).
@@ -64,8 +64,8 @@ The function obtains a matrix containing phylogeny-weighted species composition
 This method generates the principal coordinates of phylogenetic structure 
 (PCPS) (Duarte, 2011).
 
-The function scores.pcps re-scales the correlation values for \code{\link{biplot}} 
-graphics. The function plot.pcps draws a simple biplot and represent clades as 
+The function summary re-scales the correlation values for obtain the scores for \code{\link{biplot}} 
+graphics. The function plot draws a simple biplot and represent clades as 
 "spider" graphs (see \code{\link{ordispider}}).
 }
 \note{
@@ -73,11 +73,13 @@ graphics. The function plot.pcps draws a simple biplot and represent clades as
 same as they show up in the phylogenetic distance matrix. See \code{\link{organize.syncsa}}.
 }
 \examples{
+
 data(ADRS)
 res<-pcps(ADRS$community, ADRS$phylo)
 res
-#summary(res)
-#plot(res, display = "text", groups = c(rep("Clade-A", 2), rep("Clade-B", 4)))
+summary(res)
+summary(res, choices = c(1, 2))$scores
+plot(res, display = "text", groups = c(rep("Clade-A", 2), rep("Clade-B", 4)))
 
 }
 \author{

@@ -2,16 +2,13 @@
 #' @encoding UTF-8
 #' @export
 summary.pcps<-function(object, choices = c(1, 2), ...){
-    #res<-list()
-    res<-object
     if (length(choices) != 2) {
       stop("\n Choices must have length equal to two \n")
     }
-    # res$call<-object$call
-    # res$values<-object$values
-    # res$vectors<-object$vectors
-    # res$correlations<-object$correlations
-    # res$P<-object$P
+    if(is.null(object$correlations)){
+		object$correlations<-stats::cor(object$P, object$vectors)
+	}
+	res<-object
     max1<-max(object$vectors[, choices[1]])
     max2<-max(object$vectors[, choices[2]])
     min1<-min(object$vectors[, choices[1]])

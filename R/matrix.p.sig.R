@@ -8,27 +8,50 @@ matrix.p.sig<-function(comm, phylodist, envir, analysis = c("adonis", "mantel"),
 	if (length(analysis) != 1 | (is.na(analysis[1]))) {
 		stop("\n Invalid analysis. Only one argument is accepted in analysis \n")
 	}
-	if(!is.null(CL)){
-		parallel<-length(CL)
-	}
-	if(!is.null(parallel) & newClusters){
-		CL <- parallel::makeCluster(parallel, type = "PSOCK")
-	}
 	p.matrix<-SYNCSA::matrix.p(comm, phylodist, notification = FALSE)$matrix.P
 	p.dist <- vegan::vegdist(p.matrix, method = method)
 	if (squareroot == TRUE) {
-		p.dist<-sqrt(p.dist)
+	  p.dist<-sqrt(p.dist)
 	}
-	if(analysis == 1){
-		mod.obs<-vegan::adonis(p.dist~envir,permutations=runs, parallel = CL)
-		statistic.obs<-mod.obs$aov.tab$F.Model[1]
-		p.site.shuffle<-mod.obs$aov.tab$"Pr(>F)"[1]
-	}
-	if(analysis == 2){
-		env.dist<-vegan::vegdist(envir, method = method.envir)
-		mod.obs<-vegan::mantel(p.dist, env.dist, permutations = runs, parallel = CL)
-		statistic.obs<-mod.obs$statistic
-		p.site.shuffle<-mod.obs$signif
+	if(!is.null(CL)){
+		parallel<-length(CL)
+		if(analysis == 1){
+		  mod.obs<-vegan::adonis(p.dist~envir,permutations=runs, parallel = CL)
+		  statistic.obs<-mod.obs$aov.tab$F.Model[1]
+		  p.site.shuffle<-mod.obs$aov.tab$"Pr(>F)"[1]
+		}
+		if(analysis == 2){
+		  env.dist<-vegan::vegdist(envir, method = method.envir)
+		  mod.obs<-vegan::mantel(p.dist, env.dist, permutations = runs, parallel = CL)
+		  statistic.obs<-mod.obs$statistic
+		  p.site.shuffle<-mod.obs$signif
+		}
+	} else {
+	  if(is.null(parallel)){
+	    if(analysis == 1){
+	      mod.obs<-vegan::adonis(p.dist~envir, permutations = runs)
+	      statistic.obs<-mod.obs$aov.tab$F.Model[1]
+	      p.site.shuffle<-mod.obs$aov.tab$"Pr(>F)"[1]
+	    }
+	    if(analysis == 2){
+	      env.dist<-vegan::vegdist(envir, method = method.envir)
+	      mod.obs<-vegan::mantel(p.dist, env.dist, permutations = runs)
+	      statistic.obs<-mod.obs$statistic
+	      p.site.shuffle<-mod.obs$signif
+	    }
+	  } else {
+	    if(analysis == 1){
+	      mod.obs<-vegan::adonis(p.dist~envir,permutations=runs, parallel = parallel)
+	      statistic.obs<-mod.obs$aov.tab$F.Model[1]
+	      p.site.shuffle<-mod.obs$aov.tab$"Pr(>F)"[1]
+	    }
+	    if(analysis == 2){
+	      env.dist<-vegan::vegdist(envir, method = method.envir)
+	      mod.obs<-vegan::mantel(p.dist, env.dist, permutations = runs, parallel = parallel)
+	      statistic.obs<-mod.obs$statistic
+	      p.site.shuffle<-mod.obs$signif
+	    }
+	  }
 	}
 	RES$model<-mod.obs
 	RES$statistic.obs<-statistic.obs
@@ -49,6 +72,9 @@ matrix.p.sig<-function(comm, phylodist, envir, analysis = c("adonis", "mantel"),
 			res<-mod.null$statistic
 		}
 	return(res)
+	}
+	if(!is.null(parallel) & newClusters){
+	  CL <- parallel::makeCluster(parallel, type = "PSOCK")
 	}
 	if(is.null(parallel)){
 		res.null<-matrix(NA,runs,1)

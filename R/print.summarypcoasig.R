@@ -4,13 +4,13 @@
 print.summarypcoasig<-function(x, ...){
   cat("Call:\n")
   cat(deparse(x$call), "\n\n")
-  cat("Values:\n")
+  cat("\n$values:\n")
   print(as.matrix(x$values), ...)
-  cat("\n Vectors:\n")
+  cat("\n$vectors:\n")
   print(as.matrix(x$vectors), ...)
-  cat("\n Correlations:\n")
+  cat("\n$correlations:\n")
   print(as.matrix(x$correlations), ...)
-  cat("\n Probabilities:\n")
+  cat("\n$probabilities:\n")
   print(as.matrix(x$probabilities), ...)
   invisible(x)
 }

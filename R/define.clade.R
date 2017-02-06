@@ -30,7 +30,7 @@
 #' plot.phylo(tree, show.node.label = TRUE)
 #' abline(v = clades$height)
 #' @export
-define.clade<-function(tree,threshold,time,method=c("threshold","time")){
+define.clade<-function(tree, threshold, time, method = c("threshold", "time")){
 	if(is.null(tree$node.label)){
 		stop("\n Node labels not found. Use the function makeNodeLabel\n")
 	}

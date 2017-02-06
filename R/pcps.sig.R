@@ -38,7 +38,7 @@
 #' @encoding UTF-8
 #' @import SYNCSA
 #' @importFrom vegan procrustes rda adonis mantel vegdist
-#' @importFrom parallel makeCluster clusterApply stopCluster parRapply
+#' @importFrom parallel makeCluster clusterApply stopCluster parRapply clusterExport
 #' @importFrom stats glm summary.lm as.formula fitted gaussian
 #' @aliases pcps.sig matrix.p.sig
 #' @param comm Community data, with species as columns and sampling units as rows. This matrix 
@@ -66,7 +66,7 @@
 #' processes or use predefined socket cluster. Only if parallel is different of NULL (Default newClusters = TRUE).
 #' @param CL A predefined socket cluster done with parallel package.
 #' @return \item{model}{The model, an object of class glm, rda, adonis or mantel.}
-#' \item{Envir_class}{The class of each variable in environmental data in glm.}
+#' \item{envir_class}{The class of each variable in environmental data in glm.}
 #' \item{formula}{The formula used in glm.} \item{statistic.obs}{Observed F value or r value.}
 #' \item{p.site.shuffle}{The p value for the site shuffle null model.}
 #' \item{p.taxa.shuffle}{The p value for the taxa shuffle null model.}
@@ -81,8 +81,8 @@
 #' data(flona)
 #' pcps.sig(flona$community, flona$phylo, flona$environment, analysis = "glm",
 #'         formula = "pcps.1~alt", runs = 99)
-#' matrix.p.sig(flona$community,flona$phylo,flona$environment[,2],
-#'         analysis = "adonis", runs=99)
+#' matrix.p.sig(flona$community,flona$phylo,flona$environment[, 2, drop = FALSE],
+#'         analysis = "adonis", runs = 99)
 #' 
 #' 
 #' @export
@@ -131,7 +131,7 @@ pcps.sig<-function(comm, phylodist, envir, analysis = c("glm", "rda"), method = 
 		vectors.obs<-pcps.obs$vectors[, pcps.choices, drop = FALSE]
 		mod.obs<-vegan::rda(vectors.obs~envir)
 		f.obs<-F.rda(mod.obs)
-	}	
+	}
 	RES$model<-mod.obs
 	RES$statistic.obs <- f.obs
 	seqpermutation <- SYNCSA::permut.vector(ncol(phylodist), nset = runs)

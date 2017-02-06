@@ -7,8 +7,8 @@
 #' This method generates the principal coordinates of phylogenetic structure 
 #' (PCPS) (Duarte, 2011).
 #'
-#' The function scores.pcps re-scales the correlation values for \code{\link{biplot}} 
-#' graphics. The function plot.pcps draws a simple biplot and represent clades as 
+#' The function summary re-scales the correlation values for obtain the scores for \code{\link{biplot}} 
+#' graphics. The function plot draws a simple biplot and represent clades as 
 #' "spider" graphs (see \code{\link{ordispider}}).
 #' 
 #' @encoding UTF-8
@@ -35,7 +35,7 @@
 #' @return \item{P}{Phylogeny-weighted species composition matrix.} \item{values}{The eigenvalues, 
 #' relative eigenvalues and cumulative relative eigenvalues.} \item{vectors}{The principal coordinates
 #' of phylogenetic structure (PCPS).} \item{correlations}{Correlations between a PCPS axis and 
-#' phylogenetically weighted species abundances or frequencies.}
+#' phylogenetically weighted species abundances or frequencies.} \item{scores}{Scores for biplot graphics.}
 #' @note \strong{IMPORTANT}: The sequence species show up in the community data matrix MUST be the 
 #' same as they show up in the phylogenetic distance matrix. See \code{\link{organize.syncsa}}.
 #' @author Vanderlei Julio Debastiani <vanderleidebastiani@@yahoo.com.br>
@@ -44,32 +44,25 @@
 #' in grasslands. Oikos, 120, 208:215.
 #' @keywords PCPS
 #' @examples
+#'
 #' data(ADRS)
 #' res<-pcps(ADRS$community, ADRS$phylo)
 #' res
-#' #summary(res)
-#' #plot(res, display = "text", groups = c(rep("Clade-A", 2), rep("Clade-B", 4)))
+#' summary(res)
+#' summary(res, choices = c(1, 2))$scores
+#' plot(res, display = "text", groups = c(rep("Clade-A", 2), rep("Clade-B", 4)))
 #'
 #' @export
 pcps<-function(comm, phylodist, method = "bray", squareroot = TRUE, correlations = TRUE){
 	P<-SYNCSA::matrix.p(comm, phylodist, notification = FALSE)$matrix.P
-	P.dist<-vegan::vegdist(P, method = method)
-	if(squareroot){
-		P.dist<-sqrt(P.dist)
-	}
-	ordi.P<-vegan::wcmdscale(P.dist, eig = TRUE)
-	vectors<-ordi.P$points
-	colnames(vectors)<-paste("pcps.", seq_len(ncol(vectors)), sep = "")
-	values<-ordi.P$eig[ordi.P$eig>=0]
-	values<-data.frame(Eigenvalue = values, Relative_eig = values/sum(values), Cumul_eig = cumsum(values/sum(values)), row.names = paste("pcps.", 1:length(values), sep = ""))
-	if(any(ordi.P$eig<0)){
-		warning("Warning: Negative eigenvalues are present in the decomposition result, but only positive eigenvalues were considered", call. = FALSE)
-	}
-	res<-list(call = match.call(), P = P, values = values, vectors = vectors)
+	ord.P<-wcmdscale.org(P, method = method, squareroot = squareroot, eig = TRUE, correlations = correlations)
+	res<-ord.P
+	res$call<-match.call()
+	res$P<-P
+	colnames(res$vectors)<-paste("pcps.", seq_len(ncol(res$vectors)), sep = "")
+	row.names(res$values)<-colnames(res$vectors)
 	if(correlations){
-		res.cor<-stats::cor(P,vectors)
-		rownames(res.cor)<-rownames(res.cor, do.NULL = FALSE, prefix = "spp.")
-		res$correlations<-res.cor
+		rownames(res$correlations)<-rownames(res$correlations, do.NULL = FALSE, prefix = "spp.")
 	}
 	class(res) <- "pcps"
 	return(res)

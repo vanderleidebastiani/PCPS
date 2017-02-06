@@ -8,7 +8,7 @@
 \alias{summary.pcoasig}
 \title{Significant dimensions in principal coordinate analysis}
 \usage{
-pcoa.sig(data, dist = "gower", squareroot = FALSE, axis = 6,
+pcoa.sig(data, method = "gower", squareroot = FALSE, axis = 6,
   n.start = NULL, by = 1, iterations = 1000, parallel = NULL,
   newClusters = TRUE, CL = NULL)
 
@@ -21,7 +21,7 @@ pcoa.sig(data, dist = "gower", squareroot = FALSE, axis = 6,
 \arguments{
 \item{data}{Community data matrix.}
 
-\item{dist}{Dissimilarity index, as accepted by \code{\link{vegdist}} (Default dist = "gower").}
+\item{method}{Method for dissimilarity index, as accepted by \code{\link{vegdist}} (Default method = "gower").}
 
 \item{squareroot}{Logical argument (TRUE or FALSE) to specify if use square root of dissimilarity 
 index (Default squareroot = FALSE).}
@@ -86,9 +86,9 @@ If the higher dimension is significant, then all lower dimensions will also be s
 \examples{
 
 data(flona)
-res<-pcoa.sig(flona$community, dist = "bray", squareroot = FALSE, axis = 6, iterations = 100)
+res<-pcoa.sig(flona$community, method = "bray", squareroot = TRUE, axis = 6, iterations = 100)
 res
-summary(res)
+summary(res)$scores
 
 }
 \author{

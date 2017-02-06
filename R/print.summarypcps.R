@@ -4,11 +4,11 @@
 print.summarypcps<-function(x, ...){
   cat("Call:\n")
   cat(deparse(x$call), "\n\n")
-  cat("PCPS values:\n")
+  cat("\n$values:\n")
   print(as.matrix(x$values), ...)
-  cat("\n PCPS vectors:\n")
+  cat("\n$vectors:\n")
   print(as.matrix(x$vectors), ...)
-  cat("\n Correlations:\n")
+  cat("\n$correlations:\n")
   print(as.matrix(x$correlations), ...)
   invisible(x)
 }

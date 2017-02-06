@@ -81,7 +81,7 @@ pcps.curve<-function(comm, phylodist, trait, method = "bray", squareroot = TRUE,
 	res.pcps<-pcps(comm, phylodist, method = method, squareroot = squareroot, correlations = FALSE)
 	res.values<-res.pcps$values
 	res.vectors<-res.pcps$vectors
-	curve.obs<-pcpc.curve.calc(res.values,res.vectors,MT)
+	curve.obs<-pcpc.curve.calc(res.values, res.vectors, MT)
 	rownames(curve.obs)<-rownames(res.values)
 	RES$curve.obs<-curve.obs
 	if(progressbar){
@@ -117,7 +117,7 @@ pcps.curve<-function(comm, phylodist, trait, method = "bray", squareroot = TRUE,
 		    for (i in 1:runs) {
 	    	    res.curve.null.ts[[i]] <- ptest.ts(samp = seqpermutation[[i]], comm = comm, phylodist = phylodist, method = method, squareroot = squareroot, mt = MT)   
 	    	    if(progressbar){
-					SYNCSA::ProgressBAR(i,BarRuns,style=3)
+					    SYNCSA::ProgressBAR(i,BarRuns,style=3)
 				}
     		}
 		} else {

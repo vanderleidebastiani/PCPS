@@ -19,7 +19,7 @@
 #' @importFrom stats fitted
 #' @aliases pcoa.sig print.pcoasig summary.pcoasig print.summarypcoasig
 #' @param data Community data matrix.
-#' @param dist Dissimilarity index, as accepted by \code{\link{vegdist}} (Default dist = "gower").
+#' @param method Method for dissimilarity index, as accepted by \code{\link{vegdist}} (Default method = "gower").
 #' @param squareroot Logical argument (TRUE or FALSE) to specify if use square root of dissimilarity 
 #' index (Default squareroot = FALSE).
 #' @param axis Maximum number of ordination principal axes to be monitored (Default axis = 6).
@@ -58,37 +58,13 @@
 #' @examples
 #'
 #' data(flona)
-#' res<-pcoa.sig(flona$community, dist = "bray", squareroot = FALSE, axis = 6, iterations = 100)
+#' res<-pcoa.sig(flona$community, method = "bray", squareroot = TRUE, axis = 6, iterations = 100)
 #' res
-#'summary(res)
+#' summary(res)$scores
 #'
 #' @export
-pcoa.sig<-function (data, dist = "gower", squareroot = FALSE, axis = 6, n.start = NULL, by = 1, iterations = 1000, parallel = NULL, newClusters = TRUE, CL =  NULL){
+pcoa.sig<-function (data, method = "gower", squareroot = FALSE, axis = 6, n.start = NULL, by = 1, iterations = 1000, parallel = NULL, newClusters = TRUE, CL =  NULL){
 	RES <- list(call = match.call())
-	wcmdscale.org<-function(data, dist, squareroot, eig, correlations, ...){
-		res<-list()
-		data.dist<-vegan::vegdist(data, method = dist)
-		if (squareroot) {
-			data.dist <- sqrt(data.dist)
-		}
-		data.ordi <- vegan::wcmdscale(data.dist, eig = eig, ...)
-		if(eig){
-			res$vectors<-data.ordi$points
-			values<-data.ordi$eig[data.ordi$eig>=0]
-			res$values<-data.frame(Eigenvalue = values, Relative_eig = values/sum(values), Cumul_eig = cumsum(values/sum(values)))
-			if(any(data.ordi$eig<0)){
-				warning("Warning: Negative eigenvalues are present in the decomposition result, but only positive eigenvalues were considered", call. = FALSE)
-			}
-		} else {
-			res$vectors<-data.ordi
-		}
-		colnames(res$vectors)<-paste("Axis.",seq_len(ncol(res$vectors)), sep = "")
-		if(correlations){
-			res.cor<-stats::cor(data, res$vectors)
-			res$correlations<-res.cor
-		}
-	return(res)
-	}
 	data<-as.matrix(data)
 	colnames(data) <- colnames(data, do.NULL = FALSE, prefix = "v.")
 	rownames(data) <- rownames(data, do.NULL = FALSE, prefix = "u")
@@ -105,7 +81,7 @@ pcoa.sig<-function (data, dist = "gower", squareroot = FALSE, axis = 6, n.start 
 		seq.samp<-c(seq.samp, n.row)
 	}
 	table.row <- length(seq.samp)
-	pco.ref<-wcmdscale.org(data, dist = dist, squareroot = squareroot, eig = TRUE, correlations = TRUE)
+	pco.ref<-wcmdscale.org(data, method = method, squareroot = squareroot, eig = TRUE, correlations = TRUE)
 	vectors<-pco.ref$vectors[, 1:axis, drop = FALSE]
 	if (axis > ncol(pco.ref$vectors)) {
 		stop("\n axis must be lower than the number of axis with positive eigenvalues in reference ordination\n")
@@ -118,7 +94,7 @@ pcoa.sig<-function (data, dist = "gower", squareroot = FALSE, axis = 6, n.start 
 	probabilities <- matrix(NA, nrow = table.row, ncol = axis, dimnames = list(paste("n.",seq.samp, sep = ""),colnames(vectors)))
 	n.permut <- matrix(NA, nrow = table.row, ncol = axis, dimnames = list(paste("n.",seq.samp, sep = ""),colnames(vectors)))
 	n.randon <- matrix(NA, nrow = table.row, ncol = axis, dimnames = list(paste("n.",seq.samp, sep = ""),colnames(vectors)))
-	ptest<-function(r, data, dist, squareroot, axis, vectors){
+	ptest<-function(r, data, method, squareroot, axis, vectors){
 		res<-list()
 		matrix.1 <- matrix(1, nrow = 1, ncol = axis)
 		matrix.2 <- matrix(1, nrow = 1, ncol = axis)
@@ -127,7 +103,7 @@ pcoa.sig<-function (data, dist = "gower", squareroot = FALSE, axis = 6, n.start 
 		n.row<-nrow(data)
 		sam <- sample(1:n.row, r, replace = TRUE)
 		permut <- data[sam, , drop = FALSE]
-		vectors.permut<-wcmdscale.org(permut, dist = dist, squareroot = squareroot, eig = FALSE, correlations = FALSE, k = axis)$vectors
+		vectors.permut<-wcmdscale.org(permut, method = method, squareroot = squareroot, eig = FALSE, correlations = FALSE, k = axis)$vectors
 		if (ncol(vectors.permut) < axis) {
 			n.number <- axis - ncol(vectors.permut)
 			matrix.1[1,(axis-n.number+1):axis]<-0
@@ -140,10 +116,10 @@ pcoa.sig<-function (data, dist = "gower", squareroot = FALSE, axis = 6, n.start 
 		res$matrix.permut<-matrix.permut
 		res$matrix.1<-matrix.1
 		randon <- t(picante::randomizeMatrix(t(data), null.model = "richness"))
-		vectors.randon.ref<-wcmdscale.org(randon, dist = dist, squareroot = squareroot, eig = FALSE, correlations = FALSE, k = axis)$vectors
+		vectors.randon.ref<-wcmdscale.org(randon, method = method, squareroot = squareroot, eig = FALSE, correlations = FALSE, k = axis)$vectors
 		sam.randon <- sample(1:n.row, r, replace = TRUE)
 		permut.randon <- randon[sam.randon, ,drop = FALSE]
-		vectors.permut.randon<-wcmdscale.org(permut.randon, dist = dist, squareroot = squareroot, eig = FALSE, correlations = FALSE, k = axis)$vectors
+		vectors.permut.randon<-wcmdscale.org(permut.randon, method = method, squareroot = squareroot, eig = FALSE, correlations = FALSE, k = axis)$vectors
 		if (ncol(vectors.permut.randon) < axis) {
 			n.number.randon <- axis-ncol(vectors.permut.randon)
 			matrix.2[1,(axis-n.number.randon+1):axis]<-0
@@ -169,10 +145,10 @@ pcoa.sig<-function (data, dist = "gower", squareroot = FALSE, axis = 6, n.start 
 		if(is.null(parallel)){
 			res.temp<-vector("list",iterations)
 			for(i in 1:iterations){
-				res.temp[[i]]<-ptest(r,data = data, dist = dist,squareroot = squareroot, axis = axis, vectors = vectors)
+				res.temp[[i]]<-ptest(r, data = data, method = method, squareroot = squareroot, axis = axis, vectors = vectors)
 			}
 		} else {
-			res.temp<-parallel::parRapply(CL, matrix(r, iterations, 1), ptest, data = data, dist = dist, squareroot = squareroot, axis = axis, vectors = vectors)
+			res.temp<-parallel::parRapply(CL, matrix(r, iterations, 1), ptest, data = data, method = method, squareroot = squareroot, axis = axis, vectors = vectors)
 		}
 		matrix.1<-t(sapply(seq_len(iterations), function(i) res.temp[[i]]$matrix.1))
 		matrix.2<-t(sapply(seq_len(iterations), function(i) res.temp[[i]]$matrix.2))

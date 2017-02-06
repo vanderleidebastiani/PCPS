@@ -57,7 +57,7 @@ See \code{\link{family}} (Dafault family = gaussian).}
 }
 \value{
 \item{model}{The model, an object of class glm, rda, adonis or mantel.}
-\item{Envir_class}{The class of each variable in environmental data in glm.}
+\item{envir_class}{The class of each variable in environmental data in glm.}
 \item{formula}{The formula used in glm.} \item{statistic.obs}{Observed F value or r value.}
 \item{p.site.shuffle}{The p value for the site shuffle null model.}
 \item{p.taxa.shuffle}{The p value for the taxa shuffle null model.}
@@ -104,8 +104,8 @@ more that one variable.
 data(flona)
 pcps.sig(flona$community, flona$phylo, flona$environment, analysis = "glm",
         formula = "pcps.1~alt", runs = 99)
-matrix.p.sig(flona$community,flona$phylo,flona$environment[,2],
-        analysis = "adonis", runs=99)
+matrix.p.sig(flona$community,flona$phylo,flona$environment[, 2, drop = FALSE],
+        analysis = "adonis", runs = 99)
 
 
 }
