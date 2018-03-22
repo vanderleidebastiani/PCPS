@@ -34,11 +34,10 @@ and perform Principal Coordinates Analysis (PCoA) using the function
 \code{\link{wcmdscale}}. If data is of class dist, the funcion do not computes
 the dissimilarity indices.
 }
-\author{
-Vanderlei Julio Debastiani <vanderleidebastiani@yahoo.com.br>
-}
 \seealso{
 \code{\link{vegdist}}, \code{\link{wcmdscale}}
 }
+\author{
+Vanderlei Julio Debastiani <vanderleidebastiani@yahoo.com.br>
+}
 \keyword{PCPS}
-

@@ -1,12 +1,12 @@
-#' Degree of self belonging of species
+#' @title Degree of self belonging of species
 #' 
-#' Define the degree of self belonging of species.
+#' @description Define the degree of self belonging of species.
 #' 
-#' For the calculation of self-belonging of a set of species the dissimilarities between
+#' @details For the calculation of self-belonging of a set of species the dissimilarities between
 #' the species are transformed into similarities and used to define degrees of belonging 
 #' to fuzzy sets (Pillar et al. 2009; Pillar & Duarte 2010). Every species among all 
 #' species specifies a fuzzy set in relation to all other species, with a certain degree
-#'  of belonging. The self-belonging of a given species i expresses its degree of 
+#' of belonging. The self-belonging of a given species i expresses its degree of 
 #' belonging to the root node of the phylogenetic/functional tree, conditioned to the 
 #' similarities between i and all other internal nodes connecting it to the root.
 #' 
@@ -32,7 +32,7 @@
 #' self.belonging(ADRS$phylo)
 #' 
 #' @export
-self.belonging<-function (dis, standardize = TRUE){
-	diag.matrix<-diag(belonging(dis, standardize = standardize))
+self.belonging <- function (dis, standardize = TRUE){
+	diag.matrix <- diag(belonging(dis, standardize = standardize))
 	return(diag.matrix)
 }

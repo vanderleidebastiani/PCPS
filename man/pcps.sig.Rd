@@ -4,6 +4,7 @@
 \name{matrix.p.sig}
 \alias{matrix.p.sig}
 \alias{pcps.sig}
+\alias{matrix.p.sig}
 \title{Association between phylogeny-weighted species composition and environmental predictors}
 \usage{
 matrix.p.sig(comm, phylodist, envir, analysis = c("adonis", "mantel"),
@@ -109,9 +110,6 @@ matrix.p.sig(flona$community,flona$phylo,flona$environment[, 2, drop = FALSE],
 
 
 }
-\author{
-Vanderlei Julio Debastiani <vanderleidebastiani@yahoo.com.br>
-}
 \references{
 Duarte, L.S. (2011). Phylogenetic habitat filtering influences forest 
 nucleation in grasslands. Oikos, 120, 208:215.
@@ -120,5 +118,7 @@ nucleation in grasslands. Oikos, 120, 208:215.
 \code{\link{matrix.p}}, \code{\link{pcps}}, \code{\link{procrustes}}, 
 \code{\link{glm}}, \code{\link{rda}}, \code{\link{adonis}}, \code{\link{mantel}}
 }
+\author{
+Vanderlei Julio Debastiani <vanderleidebastiani@yahoo.com.br>
+}
 \keyword{PCPS}
-

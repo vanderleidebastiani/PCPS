@@ -24,7 +24,7 @@ For the calculation of self-belonging of a set of species the dissimilarities be
 the species are transformed into similarities and used to define degrees of belonging 
 to fuzzy sets (Pillar et al. 2009; Pillar & Duarte 2010). Every species among all 
 species specifies a fuzzy set in relation to all other species, with a certain degree
- of belonging. The self-belonging of a given species i expresses its degree of 
+of belonging. The self-belonging of a given species i expresses its degree of 
 belonging to the root node of the phylogenetic/functional tree, conditioned to the 
 similarities between i and all other internal nodes connecting it to the root.
 }
@@ -33,9 +33,6 @@ similarities between i and all other internal nodes connecting it to the root.
 data(ADRS)
 self.belonging(ADRS$phylo)
 
-}
-\author{
-Vanderlei Julio Debastiani <vanderleidebastiani@yahoo.com.br>
 }
 \references{
 Pillar, V.D.; Duarte, L.d.S. (2010). A framework for
@@ -49,5 +46,7 @@ ecological community gradients. Journal of Vegetation Science, 20, 334:348.
 \seealso{
 \code{\link{belonging}}
 }
+\author{
+Vanderlei Julio Debastiani <vanderleidebastiani@yahoo.com.br>
+}
 \keyword{PCPS}
-

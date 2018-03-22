@@ -1,8 +1,8 @@
-#' Principal Coordinates of Phylogenetic Structure
+#' @title Principal Coordinates of Phylogenetic Structure
 #' 
-#' Function to generate Principal Coordinates of Phylogenetic Structure (PCPS).
+#' @description Function to generate Principal Coordinates of Phylogenetic Structure (PCPS).
 #' 
-#' The function obtains a matrix containing phylogeny-weighted species composition 
+#' @details The function obtains a matrix containing phylogeny-weighted species composition 
 #' (\code{\link{matrix.p}}) and is submitted to principal coordinates analysis (PCoA). 
 #' This method generates the principal coordinates of phylogenetic structure 
 #' (PCPS) (Duarte, 2011).
@@ -53,16 +53,16 @@
 #' plot(res, display = "text", groups = c(rep("Clade-A", 2), rep("Clade-B", 4)))
 #'
 #' @export
-pcps<-function(comm, phylodist, method = "bray", squareroot = TRUE, correlations = TRUE){
-	P<-SYNCSA::matrix.p(comm, phylodist, notification = FALSE)$matrix.P
-	ord.P<-wcmdscale.org(P, method = method, squareroot = squareroot, eig = TRUE, correlations = correlations)
-	res<-ord.P
-	res$call<-match.call()
-	res$P<-P
-	colnames(res$vectors)<-paste("pcps.", seq_len(ncol(res$vectors)), sep = "")
-	row.names(res$values)<-colnames(res$vectors)
+pcps <- function(comm, phylodist, method = "bray", squareroot = TRUE, correlations = TRUE){
+	P <- SYNCSA::matrix.p(comm, phylodist, notification = FALSE)$matrix.P
+	ord.P <- wcmdscale.org(P, method = method, squareroot = squareroot, eig = TRUE, correlations = correlations)
+	res <- ord.P
+	res$call <- match.call()
+	res$P <- P
+	colnames(res$vectors) <- paste("pcps.", seq_len(ncol(res$vectors)), sep = "")
+	row.names(res$values) <- colnames(res$vectors)
 	if(correlations){
-		rownames(res$correlations)<-rownames(res$correlations, do.NULL = FALSE, prefix = "spp.")
+		rownames(res$correlations) <- rownames(res$correlations, do.NULL = FALSE, prefix = "spp.")
 	}
 	class(res) <- "pcps"
 	return(res)

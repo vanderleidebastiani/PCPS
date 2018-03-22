@@ -2,7 +2,7 @@
 #' @encoding UTF-8
 #' @export
 plot.pcps<-function(x, groups, choices = c(1, 2), display = c("text", "points"), showlabel = TRUE, ...){
-	sco<-summary(x, choices = choices)$scores
+	sco <- summary(x, choices = choices)$scores
 	if(length(groups)!=nrow(sco$scores.species)){
 		stop(paste("\n groups must have length equal to number of species. Number of species:", 6,"\n"))
 	}
@@ -15,11 +15,11 @@ plot.pcps<-function(x, groups, choices = c(1, 2), display = c("text", "points"),
 	}
 	vegan::ordispider(sco$scores.species, groups = groups, label = showlabel, ...)
 	if(showlabel){
-		g1<-ifelse(table(groups)==1,1,0)
-		g1_groups<-names(g1)[g1==1]
+		g1 <- ifelse(table(groups)==1,1,0)
+		g1_groups <- names(g1)[g1==1]
 		if(sum(g1)>0){
 			for(i in 1:sum(g1)){
-				position<-which(groups==g1_groups[i])
+				position <- which(groups==g1_groups[i])
 				vegan::ordilabel(sco$scores.species[position,,drop=FALSE], labels = groups[position], ...)
 			}	
 		}

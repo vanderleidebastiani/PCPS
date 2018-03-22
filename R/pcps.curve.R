@@ -1,9 +1,9 @@
-#' Curve of phylogenetic signal at metacommunity level
+#' @title Curve of phylogenetic signal at metacommunity level
 #' 
-#' The function estimate the phylogenetic signal at metacommunity level and draws
+#' @description The function estimate the phylogenetic signal at metacommunity level and draws
 #' a representation curve.
 #' 
-#' The PCPS are used, in a sequential manner, as predictors in a linear regression
+#' @details The PCPS are used, in a sequential manner, as predictors in a linear regression
 #' to model the trait averages across the metacommunity. The curve is drawn as the
 #' percentage of cumulative eigenvalues in the abscissa and as the determination 
 #' coefficient of regressions in the ordinate.
@@ -73,34 +73,34 @@
 #'
 #' @export
 pcps.curve<-function(comm, phylodist, trait, method = "bray", squareroot = TRUE, ranks = TRUE, null.model.ts = FALSE, null.model.bm = FALSE, tree, runs = 99, progressbar = FALSE, parallel = NULL, newClusters = TRUE, CL =  NULL){
-	RES<-list(call= match.call())
+	RES <- list(call= match.call())
 	if(ncol(trait)!=1){
 		stop("\n Only one trait is allowed\n")
 	}
-	MT<-SYNCSA::matrix.t(comm, trait, scale = FALSE, ranks = ranks, notification = FALSE)$matrix.T
-	res.pcps<-pcps(comm, phylodist, method = method, squareroot = squareroot, correlations = FALSE)
-	res.values<-res.pcps$values
-	res.vectors<-res.pcps$vectors
-	curve.obs<-pcpc.curve.calc(res.values, res.vectors, MT)
-	rownames(curve.obs)<-rownames(res.values)
-	RES$curve.obs<-curve.obs
+	MT <- SYNCSA::matrix.t(comm, trait, scale = FALSE, ranks = ranks, notification = FALSE)$matrix.T
+	res.pcps <- pcps(comm, phylodist, method = method, squareroot = squareroot, correlations = FALSE)
+	res.values <- res.pcps$values
+	res.vectors <- res.pcps$vectors
+	curve.obs <- pcpc.curve.calc(res.values, res.vectors, MT)
+	rownames(curve.obs) <- rownames(res.values)
+	RES$curve.obs <- curve.obs
 	if(progressbar){
 		if(null.model.ts & null.model.bm){
-			BarRuns<-runs*2
+			BarRuns <- runs*2
 		}else{
-			BarRuns<-runs
+			BarRuns <- runs
 		}
 	}
 	if(!is.null(CL)){
-		parallel<-length(CL)
+		parallel <- length(CL)
 	}
-	ptest.ts<-function(samp, comm, phylodist, method, squareroot, mt){
-		pcps.null<-PCPS::pcps(comm, phylodist[samp, samp], method = method, squareroot = squareroot, correlations = FALSE)
-		res<-PCPS::pcpc.curve.calc(pcps.null$values, pcps.null$vectors, mt)
+	ptest.ts <- function(samp, comm, phylodist, method, squareroot, mt){
+		pcps.null <- PCPS::pcps(comm, phylodist[samp, samp], method = method, squareroot = squareroot, correlations = FALSE)
+		res <- PCPS::pcpc.curve.calc(pcps.null$values, pcps.null$vectors, mt)
 		return(res)
 	}
-	ptest.bm<-function(samp, tree, comm, values, vectors, ranks){
-		trait.null<-cbind(ape::rTraitCont(phy = tree, model = "BM"))
+	ptest.bm <- function(samp, tree, comm, values, vectors, ranks){
+		trait.null <- cbind(ape::rTraitCont(phy = tree, model = "BM"))
 		match.names <- match(colnames(comm), rownames(trait.null))
 		MT.null <- SYNCSA::matrix.t(comm, trait.null[match.names,,drop = FALSE], scale = FALSE, ranks = ranks, notification = FALSE)$matrix.T
         res <- PCPS::pcpc.curve.calc(values, vectors, MT.null)
@@ -123,12 +123,12 @@ pcps.curve<-function(comm, phylodist, trait, method = "bray", squareroot = TRUE,
 		} else {
 			res.curve.null.ts <- parallel::clusterApply(CL, seqpermutation, ptest.ts, comm = comm, phylodist = phylodist, method = method, squareroot = squareroot, mt = MT)		
 		}	
-		RES$curve.null.ts<-res.curve.null.ts
+		RES$curve.null.ts <- res.curve.null.ts
 	}
 	if(null.model.bm){
-		seqpermutation<-vector("list",runs)
+		seqpermutation <- vector("list",runs)
 		if(is.null(parallel)){
-			res.curve.null.bm<-vector("list",runs)
+			res.curve.null.bm <- vector("list",runs)
 		    for (i in 1:runs) {
 	    	    res.curve.null.bm[[i]] <- ptest.bm(NULL, tree, comm, res.values, res.vectors, ranks = ranks)
 	    	    if(progressbar){
@@ -138,7 +138,7 @@ pcps.curve<-function(comm, phylodist, trait, method = "bray", squareroot = TRUE,
 		} else {
 			res.curve.null.bm <- parallel::clusterApply(CL, seqpermutation, ptest.bm, tree = tree, comm = comm, values = res.values, vectors = res.vectors, ranks = ranks)		
 		}
-		RES$curve.null.bm<-res.curve.null.bm
+		RES$curve.null.bm <- res.curve.null.bm
 	}
 	if((null.model.ts | null.model.bm) & !is.null(parallel) & newClusters){
 		parallel::stopCluster(CL)

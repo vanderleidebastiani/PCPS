@@ -2,7 +2,7 @@
 #' @encoding UTF-8
 #' @export
 print.pcpscurve<-function(x, ...){
-	res<-summary.pcpscurve(x)
+	res <- summary.pcpscurve(x)
 	cat("Call:\n")
 	cat(deparse(x$call), "\n\n")
 	cat("PCPS curve observed:\n")
@@ -15,7 +15,7 @@ print.pcpscurve<-function(x, ...){
 	if(!is.null(x$curve.null.bm)){
 		cat("\n")
 		cat("Mean PCPS curve model BM:\n")
-		print(as.matrix(res$null.model.bm[,1:2]))
+		print(as.matrix(res$null.model.bm[, 1:2]))
 	}
 	invisible(x)
 }

@@ -1,9 +1,9 @@
-#' Association between phylogeny-weighted species composition and environmental predictors
+#' @title Association between phylogeny-weighted species composition and environmental predictors
 #' 
-#' Analyses to relate an environmental gradient to the phylogenetic assembly of species 
+#' @description Analyses to relate an environmental gradient to the phylogenetic assembly of species 
 #' across a metacommunity by means of phylogenetic fuzzy weighting.
 #' 
-#' Each metacommunity is submitted to phylogenetic fuzzy weighting, generating a matrix
+#' @details Each metacommunity is submitted to phylogenetic fuzzy weighting, generating a matrix
 #' that describing the phylogeny-weighted species composition of the communities
 #' (\code{\link{matrix.p}}). The function matrix.p.sig test directly the association 
 #' this matrix with the environmental predictors. The pairwise dissimilarities are 
@@ -87,109 +87,110 @@
 #' 
 #' @export
 pcps.sig<-function(comm, phylodist, envir, analysis = c("glm", "rda"), method = "bray", squareroot = TRUE, formula, family = stats::gaussian, AsFactors = NULL, pcps.choices = c(1, 2, 3, 4), runs = 999, parallel = NULL, newClusters = TRUE, CL =  NULL){
-	RES<-list(call= match.call())
-	F.rda<-function (x){
-		Chi.z <- x$CCA$tot.chi
-		q <- x$CCA$qrank
-		Chi.xz <- x$CA$tot.chi
-		r <- nrow(x$CA$Xbar) - x$CCA$QR$rank - 1
-		F.0 <- (Chi.z/q)/(Chi.xz/r)
-		F.0 <- round(F.0, 12)
-	return(F.0)
-	}
-	Analysis <- c("glm", "rda")
-	analysis <- pmatch(analysis, Analysis)
-	if (length(analysis) != 1 | (is.na(analysis[1]))) {
-		stop("\n Invalid analysis. Only one argument is accepted in analysis \n")
-	}
-	if(!is.null(CL)){
-		parallel<-length(CL)
-	}
-	if(!is.null(parallel) & newClusters){
-		CL <- parallel::makeCluster(parallel, type = "PSOCK")
-	}
-	if(analysis == 1){
-		envir<-as.data.frame(envir)
-		if(!is.null(AsFactors)){
-			for(i in AsFactors){
-				envir[,i]<-as.factor(envir[,i])
-			}
-		}
-		envir.class<-SYNCSA::var.type(envir)
-		RES$envir.class<-envir.class
+  RES <- list(call= match.call())
+  F.rda <- function (x){
+    Chi.z <- x$CCA$tot.chi
+    q <- x$CCA$qrank
+    Chi.xz <- x$CA$tot.chi
+    r <- nrow(x$CA$Xbar) - x$CCA$QR$rank - 1
+    F.0 <- (Chi.z/q)/(Chi.xz/r)
+    F.0 <- round(F.0, 12)
+    return(F.0)
+  }
+  Analysis <- c("glm", "rda")
+  analysis <- pmatch(analysis, Analysis)
+  if (length(analysis) != 1 | (is.na(analysis[1]))) {
+    stop("\n Invalid analysis. Only one argument is accepted in analysis \n")
+  }
+  if(!is.null(CL)){
+    parallel <- length(CL)
+  }
+  if(!is.null(parallel) & newClusters){
+    CL <- parallel::makeCluster(parallel, type = "PSOCK")
+  }
+  if(analysis == 1){
+    envir <- as.data.frame(envir)
+    if(!is.null(AsFactors)){
+      for(i in AsFactors){
+        envir[,i] <- as.factor(envir[,i])
+      }
     }
-	pcps.obs <-pcps(comm, phylodist, method = method, squareroot = squareroot, correlations = FALSE)
-	if(analysis == 1){
-		mod.obs<-stats::glm(formula, data = data.frame(envir, pcps.obs$vectors), family = family)
-		f.obs<-stats::summary.lm(mod.obs)$fstatistic[1]
-		y.name<-as.character(stats::as.formula(formula)[[2]])
-		vectors.obs<-pcps.obs$vectors[, y.name, drop = FALSE]
-		RES$formula<-formula
-	}
-	if(analysis == 2){
-		envir<-as.matrix(envir)
-		vectors.obs<-pcps.obs$vectors[, pcps.choices, drop = FALSE]
-		mod.obs<-vegan::rda(vectors.obs~envir)
-		f.obs<-F.rda(mod.obs)
-	}
-	RES$model<-mod.obs
-	RES$statistic.obs <- f.obs
-	seqpermutation <- SYNCSA::permut.vector(ncol(phylodist), nset = runs)
-	seqpermutation2 <- SYNCSA::permut.vector(nrow(vectors.obs), nset = runs)
-	ptest<-function(i, seqperm1, seqperm2, comm, phylodist, envir, method, squareroot, analysis, vectors.obs, formula, y.name, family, pcps.choices){
-		samp<-seqperm1[[i]]
-		samp2<-seqperm2[[i]]
-		pcps.null<-PCPS::pcps(comm, phylodist[samp, samp], method = method, squareroot = squareroot, correlations = FALSE)
-		if(analysis == 1){
-			vector.null.taxa<-stats::fitted(vegan::procrustes(vectors.obs, pcps.null$vectors[, y.name, drop = FALSE], symmetric = TRUE, choices = 1))
-			colnames(vector.null.taxa)<-y.name
-			mod.null.taxa<-stats::glm(formula, data = data.frame(vector.null.taxa, envir), family = family)
-			mod.null.site<-stats::glm(formula, data = data.frame(vectors.obs[samp2, , drop = FALSE], envir), family = family)
-			F.null.taxa<-stats::summary.lm(mod.null.taxa)$fstatistic[1]
-			F.null.site<-stats::summary.lm(mod.null.site)$fstatistic[1]
-		}
-		if(analysis == 2){
-			if(length(pcps.choices)==1){
-				vectors.null.taxa<-stats::fitted(vegan::procrustes(vectors.obs, pcps.null$vectors[, pcps.choices, drop = FALSE], symmetric = TRUE, choices = 1))
-			} else {
-				vectors.null.taxa<-stats::fitted(vegan::procrustes(vectors.obs, pcps.null$vectors[, pcps.choices, drop = FALSE], symmetric = TRUE))
-			}
-			mod.null.taxa<-vegan::rda(vectors.null.taxa~envir)
-			mod.null.site<-vegan::rda(vectors.obs[samp2, , drop = FALSE]~envir)
-			F.null.taxa<-F.rda(mod.null.taxa)
-			F.null.site<-F.rda(mod.null.site)
-		}
-	return(cbind(F.null.taxa, F.null.site))
-	}
-	seqpermutation <- lapply(seq_len(nrow(seqpermutation)), function(i) seqpermutation[i,])
-	seqpermutation2 <- lapply(seq_len(nrow(seqpermutation2)), function(i) seqpermutation2[i,])
-	seqpermutation0 <- as.list(seq_len(runs))
-	if(is.null(parallel)){
-		res.F.null<-vector("list",runs)
-		for (i in 1:runs) {
-			if(analysis == 1){
-				res.F.null[[i]] <- ptest(i = seqpermutation0[[i]], seqperm1 = seqpermutation, seqperm2 = seqpermutation2, comm = comm, phylodist = phylodist, envir = envir, method = method, squareroot = squareroot, analysis = 1, vectors.obs = vectors.obs, formula = formula, y.name = y.name, family = family)   
-			}
-			if(analysis == 2){
-				res.F.null[[i]] <- ptest(i = seqpermutation0[[i]], seqperm1 = seqpermutation, seqperm2 = seqpermutation2,  comm = comm, phylodist = phylodist, envir = envir, method = method, squareroot = squareroot, analysis = 2, vectors.obs = vectors.obs, pcps.choices = pcps.choices)   
-			}
-		}
-	} else {
-		if(analysis == 1){
-			res.F.null<-parallel::clusterApply(CL, seqpermutation0, ptest, seqperm1 = seqpermutation, seqperm2 = seqpermutation2, comm = comm, phylodist = phylodist, envir = envir, method = method, squareroot = squareroot, analysis = 1, vectors.obs = vectors.obs, formula = formula, y.name = y.name, family = family)
-		}
-		if(analysis == 2){
-			res.F.null<-parallel::clusterApply(CL, seqpermutation0, ptest, seqperm1 = seqpermutation, seqperm2 = seqpermutation2, comm = comm, phylodist = phylodist, envir = envir, method = method, squareroot = squareroot, analysis = 2, vectors.obs = vectors.obs, pcps.choices = pcps.choices) 
-		}
-	} 
-	F.null.taxa<-sapply(seq_len(runs), function(i) res.F.null[[i]][1,1])
-	F.null.site<-sapply(seq_len(runs), function(i) res.F.null[[i]][1,2]) 
-	if(!is.null(parallel) & newClusters){
-		parallel::stopCluster(CL)
-	}
-	p.taxa.shuffle<-(sum(ifelse(F.null.taxa>=f.obs, 1, 0))+1)/(runs+1)
-	p.site.shuffle<-(sum(ifelse(F.null.site>=f.obs, 1, 0))+1)/(runs+1)
-	RES$p.taxa.shuffle<-p.taxa.shuffle
-	RES$p.site.shuffle<-p.site.shuffle
-return(RES)
+    envir.class <- SYNCSA::var.type(envir)
+    RES$envir.class <- envir.class
+  }
+  pcps.obs <- pcps(comm, phylodist, method = method, squareroot = squareroot, correlations = FALSE)
+  if(analysis == 1){
+    mod.obs <- stats::glm(formula, data = data.frame(envir, pcps.obs$vectors), family = family)
+    f.obs <- stats::summary.lm(mod.obs)$fstatistic[1]
+    y.name <- as.character(stats::as.formula(formula)[[2]])
+    vectors.obs <- pcps.obs$vectors[, y.name, drop = FALSE]
+    RES$formula <- formula
+  }
+  if(analysis == 2){
+    envir <- as.matrix(envir)
+    vectors.obs <- pcps.obs$vectors[, pcps.choices, drop = FALSE]
+    mod.obs <- vegan::rda(vectors.obs~envir)
+    f.obs <- F.rda(mod.obs)
+  }
+  RES$model <- mod.obs
+  RES$statistic.obs <- f.obs
+  seqpermutation <- SYNCSA::permut.vector(ncol(phylodist), nset = runs)
+  seqpermutation2 <- SYNCSA::permut.vector(nrow(vectors.obs), nset = runs)
+  ptest <- function(i, seqperm1, seqperm2, comm, phylodist, envir, method, squareroot, analysis, vectors.obs, formula, y.name, family, pcps.choices){
+    samp <- seqperm1[[i]]
+    samp2 <- seqperm2[[i]]
+    pcps.null <- PCPS::pcps(comm, phylodist[samp, samp], method = method, squareroot = squareroot, correlations = FALSE)
+    if(analysis == 1){
+      vector.null.taxa <- stats::fitted(vegan::procrustes(vectors.obs, pcps.null$vectors[, y.name, drop = FALSE], symmetric = TRUE, choices = 1))
+      colnames(vector.null.taxa) <- y.name
+      mod.null.taxa <- stats::glm(formula, data = data.frame(vector.null.taxa, envir), family = family)
+      mod.null.site <- stats::glm(formula, data = data.frame(vectors.obs[samp2, , drop = FALSE], envir), family = family)
+      F.null.taxa <- stats::summary.lm(mod.null.taxa)$fstatistic[1]
+      F.null.site <- stats::summary.lm(mod.null.site)$fstatistic[1]
+    }
+    if(analysis == 2){
+      if(length(pcps.choices)==1){
+        vectors.null.taxa <- stats::fitted(vegan::procrustes(vectors.obs, pcps.null$vectors[, pcps.choices, drop = FALSE], symmetric = TRUE, choices = 1))
+      } else {
+        vectors.null.taxa <- stats::fitted(vegan::procrustes(vectors.obs, pcps.null$vectors[, pcps.choices, drop = FALSE], symmetric = TRUE))
+      }
+      mod.null.taxa <- vegan::rda(vectors.null.taxa~envir)
+      mod.null.site <- vegan::rda(vectors.obs[samp2, , drop = FALSE]~envir)
+      F.null.taxa <- F.rda(mod.null.taxa)
+      F.null.site <- F.rda(mod.null.site)
+    }
+    return(cbind(F.null.taxa, F.null.site))
+  }
+  seqpermutation <- lapply(seq_len(nrow(seqpermutation)), function(i) seqpermutation[i,])
+  seqpermutation2 <- lapply(seq_len(nrow(seqpermutation2)), function(i) seqpermutation2[i,])
+  seqpermutation0 <- as.list(seq_len(runs))
+  if(is.null(parallel)){
+    res.F.null<-vector("list",runs)
+    for (i in 1:runs) {
+      if(analysis == 1){
+        res.F.null[[i]] <- ptest(i = seqpermutation0[[i]], seqperm1 = seqpermutation, seqperm2 = seqpermutation2, comm = comm, phylodist = phylodist, envir = envir, method = method, squareroot = squareroot, analysis = 1, vectors.obs = vectors.obs, formula = formula, y.name = y.name, family = family)   
+      }
+      if(analysis == 2){
+        res.F.null[[i]] <- ptest(i = seqpermutation0[[i]], seqperm1 = seqpermutation, seqperm2 = seqpermutation2,  comm = comm, phylodist = phylodist, envir = envir, method = method, squareroot = squareroot, analysis = 2, vectors.obs = vectors.obs, pcps.choices = pcps.choices)   
+      }
+    }
+  } else {
+    if(analysis == 1){
+      res.F.null<-parallel::clusterApply(CL, seqpermutation0, ptest, seqperm1 = seqpermutation, seqperm2 = seqpermutation2, comm = comm, phylodist = phylodist, envir = envir, method = method, squareroot = squareroot, analysis = 1, vectors.obs = vectors.obs, formula = formula, y.name = y.name, family = family)
+    }
+    if(analysis == 2){
+      parallel::clusterExport(CL, "F.rda")
+      res.F.null <- parallel::clusterApply(CL, seqpermutation0, ptest, seqperm1 = seqpermutation, seqperm2 = seqpermutation2, comm = comm, phylodist = phylodist, envir = envir, method = method, squareroot = squareroot, analysis = 2, vectors.obs = vectors.obs, pcps.choices = pcps.choices) 
+    }
+  } 
+  F.null.taxa <- sapply(seq_len(runs), function(i) res.F.null[[i]][1,1])
+  F.null.site <- sapply(seq_len(runs), function(i) res.F.null[[i]][1,2]) 
+  if(!is.null(parallel) & newClusters){
+    parallel::stopCluster(CL)
+  }
+  p.taxa.shuffle <- (sum(ifelse(F.null.taxa>=f.obs, 1, 0))+1)/(runs+1)
+  p.site.shuffle <- (sum(ifelse(F.null.site>=f.obs, 1, 0))+1)/(runs+1)
+  RES$p.taxa.shuffle <- p.taxa.shuffle
+  RES$p.site.shuffle <- p.site.shuffle
+  return(RES)
 }

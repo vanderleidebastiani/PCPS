@@ -2,7 +2,7 @@ Package: PCPS
 Type: Package
 Title: Principal Coordinates of Phylogenetic Structure
 Version: 1.0.4
-Date: 2017-02-06
+Date: 2018-03-22
 Author: Vanderlei Julio Debastiani
 Maintainer: Vanderlei Julio Debastiani <vanderleidebastiani@yahoo.com.br>
 Depends:
@@ -16,7 +16,6 @@ Imports:
     stats,
     graphics,
     parallel
-Description: Set of functions for analysis of Principal Coordinates of
-    Phylogenetic Structure (PCPS).
+Description: Set of functions for analysis of Principal Coordinates of Phylogenetic Structure (PCPS).
 License: GPL-2
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

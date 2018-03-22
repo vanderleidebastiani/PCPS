@@ -39,11 +39,10 @@ clades
 plot.phylo(tree, show.node.label = TRUE)
 abline(v = clades$height)
 }
-\author{
-Vanderlei Julio Debastiani <vanderleidebastiani@yahoo.com.br>
-}
 \seealso{
 \code{\link{makeNodeLabel}}
 }
+\author{
+Vanderlei Julio Debastiani <vanderleidebastiani@yahoo.com.br>
+}
 \keyword{PCPS}
-
