@@ -87,7 +87,7 @@
 #' 
 #' @export
 pcps.sig<-function(comm, phylodist, envir, analysis = c("glm", "rda"), method = "bray", squareroot = TRUE, formula, family = stats::gaussian, AsFactors = NULL, pcps.choices = c(1, 2, 3, 4), runs = 999, parallel = NULL, newClusters = TRUE, CL =  NULL){
-  RES <- list(call= match.call())
+  RES <- list(call = match.call())
   F.rda <- function (x){
     Chi.z <- x$CCA$tot.chi
     q <- x$CCA$qrank
@@ -137,6 +137,15 @@ pcps.sig<-function(comm, phylodist, envir, analysis = c("glm", "rda"), method = 
   seqpermutation <- SYNCSA::permut.vector(ncol(phylodist), nset = runs)
   seqpermutation2 <- SYNCSA::permut.vector(nrow(vectors.obs), nset = runs)
   ptest <- function(i, seqperm1, seqperm2, comm, phylodist, envir, method, squareroot, analysis, vectors.obs, formula, y.name, family, pcps.choices){
+    F.rda <- function (x){
+      Chi.z <- x$CCA$tot.chi
+      q <- x$CCA$qrank
+      Chi.xz <- x$CA$tot.chi
+      r <- nrow(x$CA$Xbar) - x$CCA$QR$rank - 1
+      F.0 <- (Chi.z/q)/(Chi.xz/r)
+      F.0 <- round(F.0, 12)
+      return(F.0)
+    }
     samp <- seqperm1[[i]]
     samp2 <- seqperm2[[i]]
     pcps.null <- PCPS::pcps(comm, phylodist[samp, samp], method = method, squareroot = squareroot, correlations = FALSE)
@@ -179,7 +188,6 @@ pcps.sig<-function(comm, phylodist, envir, analysis = c("glm", "rda"), method = 
       res.F.null<-parallel::clusterApply(CL, seqpermutation0, ptest, seqperm1 = seqpermutation, seqperm2 = seqpermutation2, comm = comm, phylodist = phylodist, envir = envir, method = method, squareroot = squareroot, analysis = 1, vectors.obs = vectors.obs, formula = formula, y.name = y.name, family = family)
     }
     if(analysis == 2){
-      parallel::clusterExport(CL, "F.rda")
       res.F.null <- parallel::clusterApply(CL, seqpermutation0, ptest, seqperm1 = seqpermutation, seqperm2 = seqpermutation2, comm = comm, phylodist = phylodist, envir = envir, method = method, squareroot = squareroot, analysis = 2, vectors.obs = vectors.obs, pcps.choices = pcps.choices) 
     }
   } 
