@@ -6,7 +6,7 @@ Date: 2018-03-22
 Author: Vanderlei Julio Debastiani
 Maintainer: Vanderlei Julio Debastiani <vanderleidebastiani@yahoo.com.br>
 Depends:
-    SYNCSA
+    SYNCSA (>= 1.3.3)
 Imports:
     ape,
     picante,
