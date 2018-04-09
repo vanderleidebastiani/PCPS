@@ -1,4 +1,4 @@
-PCPS 1.0.4
+PCPS 1.0.5
 ====
 
 [![Travis-CI Build Status](https://travis-ci.org/vanderleidebastiani/PCPS.svg?branch=master)](https://travis-ci.org/vanderleidebastiani/PCPS)
@@ -9,7 +9,7 @@ R Package - PCPS - Principal Coordinates of Phylogenetic Structure
 
 ## Previous version
 
-PCPS 1.0.4 available in [`CRAN`](https://cran.r-project.org/web/packages/PCPS/index.html)
+PCPS 1.0.5 available in [`CRAN`](https://cran.r-project.org/web/packages/PCPS/index.html)
 
 ## Installation
   

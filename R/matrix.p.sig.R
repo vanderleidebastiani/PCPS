@@ -8,6 +8,7 @@ matrix.p.sig<-function(comm, phylodist, envir, analysis = c("adonis", "mantel"),
   if (length(analysis) != 1 | (is.na(analysis[1]))) {
     stop("\n Invalid analysis. Only one argument is accepted in analysis \n")
   }
+  envir <- as.matrix(envir)
   p.matrix <- SYNCSA::matrix.p(comm, phylodist, notification = FALSE)$matrix.P
   p.dist <- vegan::vegdist(p.matrix, method = method)
   if (squareroot) {

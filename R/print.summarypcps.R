@@ -10,5 +10,9 @@ print.summarypcps<-function(x, ...){
   print(as.matrix(x$vectors), ...)
   cat("\n$correlations:\n")
   print(as.matrix(x$correlations), ...)
+  cat("\n$scores$scores.sites:\n")
+  print(as.matrix(x$scores$scores.sites), ...)
+  cat("\n$scores$scores.species:\n")
+  print(as.matrix(x$scores$scores.species), ...)
   invisible(x)
 }

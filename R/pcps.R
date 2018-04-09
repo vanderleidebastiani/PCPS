@@ -7,7 +7,7 @@
 #' This method generates the principal coordinates of phylogenetic structure 
 #' (PCPS) (Duarte, 2011).
 #'
-#' The function summary re-scales the correlation values for obtain the scores for \code{\link{biplot}} 
+#' The function summary or the function scores.pcps re-scales the correlation values for obtain the scores for \code{\link{biplot}} 
 #' graphics. The function plot draws a simple biplot and represent clades as 
 #' "spider" graphs (see \code{\link{ordispider}}).
 #' 
@@ -16,7 +16,7 @@
 #' @importFrom stats cor
 #' @importFrom vegan ordispider wcmdscale ordilabel vegdist
 #' @importFrom graphics plot points text
-#' @aliases pcps print.pcps summary.pcps print.summarypcps plot.pcps
+#' @aliases pcps print.pcps summary.pcps print.summarypcps plot.pcps scores.pcps
 #' @param comm Community data, with species as columns and sampling units as rows. 
 #' This matrix can contain either presence/absence or abundance data.
 #' @param phylodist Matrix containing phylogenetic distances between species.
@@ -28,8 +28,8 @@
 #' @param object An object of class pcps.
 #' @param x An object of class pcps.
 #' @param choices Axes for re-scaling. Choices must have length equal to two (Default choices = c(1, 2)).
-#' @param display Display text or points for the sampling units.
-#' @param groups Factor giving the groups (Clades) for each species.
+#' @param display Display text or points for the sampling units, partial match to "text" or "points" (Default display = "text").
+#' @param groups Factor giving the groups (Clades) for each species  (Default groups = NULL).
 #' @param showlabel Label the groups by their names in the centroid of the object.
 #' @param ... Other parameters for the respective functions.
 #' @return \item{P}{Phylogeny-weighted species composition matrix.} \item{values}{The eigenvalues, 

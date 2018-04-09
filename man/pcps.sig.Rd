@@ -52,7 +52,8 @@ See Details.}
 \item{family}{A description of the error distribution to be used in used in GLM analysis. 
 See \code{\link{family}} (Dafault family = gaussian).}
 
-\item{AsFactors}{Encode an environmental variable as factor used in GLM analysis. See Details.}
+\item{AsFactors}{Encode an environmental variable as factor used in GLM analysis. The sequence 
+is the same that in the environmental data matrix. See Details.}
 
 \item{pcps.choices}{PCPS used in RDA analysis (Default pcps.choices = c(1, 2, 3, 4)).}
 }
@@ -97,8 +98,8 @@ The item formula is an expression of the form pcps.1 ~ model. The response term 
 pcps name, for example pcps.1, pcps.2, pcps.12.
 
 The item AsFactors changes a environmental variable for the class \code{\link{factor}}. The 
-sequence is the same that in the environmental data matrix. Use \code{\link{c}} to combine 
-more that one variable.
+sequence is the same that in the environmental data matrix, not the order in the formula.
+Use \code{\link{c}} to combine more that one variable.
 }
 \examples{
 
