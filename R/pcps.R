@@ -62,6 +62,7 @@ pcps <- function(comm, phylodist, method = "bray", squareroot = TRUE, correlatio
 	colnames(res$vectors) <- paste("pcps.", seq_len(ncol(res$vectors)), sep = "")
 	row.names(res$values) <- colnames(res$vectors)
 	if(correlations){
+	  colnames(res$correlations) <- paste("pcps.", seq_len(ncol(res$vectors)), sep = "")
 		rownames(res$correlations) <- rownames(res$correlations, do.NULL = FALSE, prefix = "spp.")
 	}
 	class(res) <- "pcps"

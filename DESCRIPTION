@@ -1,8 +1,8 @@
 Package: PCPS
 Type: Package
 Title: Principal Coordinates of Phylogenetic Structure
-Version: 1.0.5
-Date: 2018-04-09
+Version: 1.0.6
+Date: 2018-05-24
 Author: Vanderlei Julio Debastiani
 Maintainer: Vanderlei Julio Debastiani <vanderleidebastiani@yahoo.com.br>
 Depends:

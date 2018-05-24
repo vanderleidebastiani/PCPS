@@ -17,7 +17,7 @@ define.clade(tree, threshold, time, method = c("threshold", "time"))
 \item{method}{Method to define the clades, "threshold" or "time".}
 }
 \value{
-\item{clades}{Tips and their clades.} \item{height}{The cutting height.}
+\item{clades}{Tips and their clades.} \item{height}{The cutting height (age).}
 }
 \description{
 Function to define groups (clades) in a phylogenetic tree.

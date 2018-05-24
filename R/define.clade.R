@@ -17,7 +17,7 @@
 #' @param threshold A threshold value to form the groups.
 #' @param time A cutting height (age) to form the groups.
 #' @param method Method to define the clades, "threshold" or "time".
-#' @return \item{clades}{Tips and their clades.} \item{height}{The cutting height.}
+#' @return \item{clades}{Tips and their clades.} \item{height}{The cutting height (age).}
 #' @author Vanderlei Julio Debastiani <vanderleidebastiani@@yahoo.com.br>
 #' @seealso \code{\link{makeNodeLabel}}
 #' @keywords PCPS
