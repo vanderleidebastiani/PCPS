@@ -1,8 +1,8 @@
 Package: PCPS
 Type: Package
 Title: Principal Coordinates of Phylogenetic Structure
-Version: 1.0.6
-Date: 2018-05-24
+Version: 1.0.7
+Date: 2018-11-27
 Author: Vanderlei Julio Debastiani
 Maintainer: Vanderlei Julio Debastiani <vanderleidebastiani@yahoo.com.br>
 Depends:
@@ -15,7 +15,42 @@ Imports:
     RcppArmadillo,
     stats,
     graphics,
-    parallel
+    parallel,
+    nlme
 Description: Set of functions for analysis of Principal Coordinates of Phylogenetic Structure (PCPS).
 License: GPL-2
-RoxygenNote: 6.0.1
+Encoding: UTF-8
+RoxygenNote: 6.1.1
+Collate: 
+    'matrix.p.sig.R'
+    'pcps.sig.R'
+    'FUN.ADONIS.R'
+    'FUN.ADONIS2.global.R'
+    'FUN.ADONIS2.margin.R'
+    'FUN.GLM.R'
+    'FUN.GLS.marginal.R'
+    'FUN.GLS.sequential.R'
+    'FUN.LME.marginal.R'
+    'FUN.LME.sequential.R'
+    'FUN.MANTEL.R'
+    'FUN.RDA.R'
+    'define.clade.R'
+    'matrix.p.null.R'
+    'pcoa.sig.R'
+    'pcps.curve.R'
+    'pcpc.curve.calc.R'
+    'pcps.R'
+    'plot.pcps.R'
+    'plot.pcpscurve.R'
+    'print.pcoasig.R'
+    'print.pcps.R'
+    'print.pcpscurve.R'
+    'print.pcpssig.R'
+    'print.summarypcoasig.R'
+    'print.summarypcps.R'
+    'scores.pcps.R'
+    'self.belonging.R'
+    'summary.pcoasig.R'
+    'summary.pcps.R'
+    'summary.pcpscurve.R'
+    'wcmdscale.org.R'

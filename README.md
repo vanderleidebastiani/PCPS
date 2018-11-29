@@ -1,4 +1,4 @@
-PCPS 1.0.6
+PCPS 1.0.7
 ====
 
 [![Travis-CI Build Status](https://travis-ci.org/vanderleidebastiani/PCPS.svg?branch=master)](https://travis-ci.org/vanderleidebastiani/PCPS)

@@ -7,11 +7,12 @@
 #' that describing the phylogeny-weighted species composition of the communities
 #' (\code{\link{matrix.p}}). The function matrix.p.sig test directly the association 
 #' this matrix with the environmental predictors. The pairwise dissimilarities are 
-#' submitted to Mantel test (\code{\link{mantel}}) or ADONIS test (\code{\link{adonis}})
+#' submitted to Mantel test (\code{\link{mantel}}) or ADONIS test (\code{\link{adonis}} or \code{\link{adonis2}})
 #' to evaluate the influence of an environmental gradient on species dispersion across 
 #' the communities. The function pcps.sig generates principal coordinates of phylogenetic
 #' structure (\code{\link{pcps}}) and use a single axis for run a generalized linear 
-#' model (GLM, \code{\link{glm}}) or use set of axis for run a distance-based redundancy
+#' model (GLM, \code{\link{glm}}), linear model using generalized least squares (GLS, \code{\link{gls}}),
+#' linear mixed-effects models (LME, \code{\link{lme}}) or use set of axis for run a distance-based redundancy
 #' analysis (db-RDA, \code{\link{rda}}).
 #' 
 #' The significance is obtained via two null models, one that shuffles sites across the
@@ -28,178 +29,241 @@
 #' (or r value) to generate a probability value of the original F value being generated merely by
 #' chance according to each null model.
 #' 
-#' The item formula is an expression of the form pcps.1 ~ model. The response term must be the 
-#' pcps name, for example pcps.1, pcps.2, pcps.12.
+#' \strong{The argument FUN}
 #' 
-#' The item AsFactors changes a environmental variable for the class \code{\link{factor}}. The 
-#' sequence is the same that in the environmental data matrix, not the order in the formula.
-#' Use \code{\link{c}} to combine more that one variable.
+#' The type of analysis performed by this function is specified using the argument \emph{FUN}. The current version 
+#' of package includes ten predefined function, however additional small functions can be easy specify. All
+#' this function uses the environmental variables to analyze the association between phylogeny-weighted species
+#' composition and environmental predictors. For matrix P analysis, in \emph{matrix.p.sig} function, the predefined 
+#' functions available are \emph{FUN.MANTEL}, \emph{FUN.ADONIS}, \emph{FUN.ADONIS2.global} and \emph{FUN.ADONIS2.margin}. For PCPS 
+#' analysis, in \emph{pcps.sig} function, the predefined functions available are \emph{FUN.GLM}, \emph{FUN.RDA}, \emph{FUN.GLS.marginal}, 
+#' \emph{FUN.GLS.sequential}, \emph{FUN.LME.marginal} and \emph{FUN.LME.sequential}. The significance 
+#' for each null model is performed as described here, NOT using p value of basic functions.
+#' 
+#' \strong{FUN.MANTEL}
+#' 
+#' Mantel test that can be used in matrix P analysis. The arguments \emph{method.p} and \emph{sqrt.p} are specified for determine resemblance 
+#' index between communities based on P matrix. The argument \emph{method.envir} is specified to determine resemblance 
+#' index between communities based on environmental variables. The significance is assess using r value, see more in \code{\link{mantel}}.
+#' 
+#' \strong{FUN.ADONIS}
+#' 
+#' Multivariate analysis of variance that can be used in matrix P analysis. The arguments \emph{method.p} and \emph{sqrt.p} are specified for determine resemblance 
+#' index between communities based on P matrix. The argument \emph{formula} is specified, where the left hand side gives 
+#' the resemblance data, right hand side gives the variables. The resemblance data is internally named \emph{p.dist}, 
+#' thus formula is an expression of the form \emph{p.dist ~ model} (see Examples). The significance is assess using overall F value, 
+#' see more in \code{\link{adonis}}.
+#' 
+#' \strong{FUN.ADONIS2.global and FUN.ADONIS2.margin}
+#' 
+#' Multivariate analysis of variance that can be used in matrix P analysis. The arguments \emph{method.p} and \emph{sqrt.p} are specified for determine resemblance 
+#' index between communities based on P matrix. The argument \emph{formula} is specified, where the left hand side gives 
+#' the resemblance data, right hand side gives the variables. The resemblance data is internally named \emph{p.dist}, 
+#' thus formula is an expression of the form \emph{p.dist ~ model} (see Examples). The significance is assess using F value 
+#' and the difference between function is due to the argument \emph{by} in \code{\link{adonis2}}. The function 
+#' \emph{FUN.ADONIS2.global} use as default \emph{by = NULL} to assess the overall significance of all terms together
+#' whereas the function \emph{FUN.ADONIS2.margin} use as default \emph{by = margin} to assess the marginal effects of 
+#' the terms and return F and p value for each term. See more in \code{\link{adonis2}}.
+#' 
+#' \strong{FUN.GLM}
+#' 
+#' Generalized linear models that can be used in PCPS analysis. The argument \emph{formula} is specified, where the left hand side gives the PCPS used, 
+#' right hand side gives the variables. The PCPS are internally named sequentially \emph{pcps.1}, \emph{pcps.2}, \emph{pcps.3} and so 
+#' on. Thus, formula is an expression of the form \emph{pcps.1 ~ model} (see Examples). The type of environmental variables are 
+#' extracted directly from \emph{envir} argument, thus variables of class \code{\link{factor}} can be already
+#' specified in \emph{envir} \code{\link{data.frame}} or through \emph{formula} argument. The significance is assess using overall 
+#' F value, see more in \code{\link{glm}}.
+#' 
+#' \strong{FUN.RDA}
+#' 
+#' Redundancy analysis that can be used in PCPS analysis. The RDA analysis is performed using all PCPS specified with choices argument and 
+#' all environmental variables specified by envir argument. The significance is assess using overall 
+#' F value, see more in \code{\link{rda}}.
+#' 
+#' \strong{FUN.GLS.marginal and FUN.GLS.sequential}
+#' 
+#' Linear model using generalized least squares that can be used in PCPS analysis. The argument \emph{formula} is specified, where the left hand side gives the PCPS used, 
+#' right hand side gives the variables. The PCPS are internally named sequentially \emph{pcps.1}, \emph{pcps.2}, \emph{pcps.3} and so 
+#' on. Thus, formula is an expression of the form \emph{pcps.1 ~ model} (see Examples). The type of environmental variables are 
+#' extracted directly from \emph{envir} argument, thus variables of class \code{\link{factor}} can be already
+#' specified in \emph{envir} \code{\link{data.frame}} or through \emph{formula} argument. The significance is assess using F value 
+#' and the difference between function is due to the argument \emph{type} in \code{\link{anova.gls}}. The function 
+#' \emph{FUN.GLS.marginal} use as default \emph{type = marginal} to assess the marginal significance of all terms
+#' whereas the function \emph{FUN.GSL.sequential} use as default \emph{type = sequential} to assess the sequential effects of 
+#' the terms. Those funcitons return all F values calculed by \code{\link{anova.gls}}, including the intercept if it is in the model. 
+#' Additional arguments as \emph{correlation} can be passed by \emph{...} argument. See more in \code{\link{gls}} and \code{\link{anova.gls}}.
+#' 
+#' \strong{FUN.LME.marginal and FUN.LME.sequential}
+#' 
+#' Linear mixed-effects models that can be used in PCPS analysis. The argument \emph{formula} is specified, where the left hand side gives the PCPS used, 
+#' right hand side gives the variables. The PCPS are internally named sequentially \emph{pcps.1}, \emph{pcps.2}, \emph{pcps.3} and so 
+#' on. Thus, formula is an expression of the form \emph{pcps.1 ~ model} (see Examples). The type of environmental variables are 
+#' extracted directly from \emph{envir} argument, thus variables of class \code{\link{factor}} can be already
+#' specified in \emph{envir} \code{\link{data.frame}} or through \emph{formula} argument. The significance is assess using F value 
+#' and the difference between function is due to the argument \emph{type} in \code{\link{anova.lme}}. The function 
+#' \emph{FUN.LME.marginal} use as default \emph{type = marginal} to assess the marginal significance of all terms
+#' whereas the function \emph{FUN.LME.sequential} use as default \emph{type = sequential} to assess the sequential effects of 
+#' the terms. Those funcitons return all F values calculed by \code{\link{anova.lme}}, including the intercept if it is in the model. 
+#' Additional arguments as \emph{correlation} and \emph{random} can be passed by \emph{...} argument. See more in \code{\link{lme}} and \code{\link{anova.lme}}.
+#' 
+#' \strong{Additional function}
+#' 
+#' The functions \emph{matrix.p.sig} and \emph{pcps.sig} only perform permutation following null models and apply the functions in all 
+#' permuted matrices. Additional functions can be easy specify and passed via \emph{FUN} argument. A skeleton of this function is slowed 
+#' below. In this function the argument \emph{x} will be always the matrix P or one matrix with PCPS choose, when additional arguments
+#' as \emph{envir} will specify statistical analysis performed in matrix P ou PCPS. This function must return the observed statistical in addition the
+#' \emph{return.model} argument must not be specified because it specify the return options used for observed and null statistics.
+#' 
+#' \preformatted{FUN.X <- function(x, envir, ..., return.model = FALSE){
+#'   mod.obs <- # Function to perform analysis using x, envir and any additional argument
+#'   statistic.obs <- # Extract only the numeric values of observed statistical
+#'   # Next lines are mandatory
+#'    if(return.model){
+#'       res <- list()
+#'       res$mod.obs <- mod.obs
+#'       res$statistic.obs <- statistic.obs
+#'     } else{
+#'       res <- statistic.obs
+#'     }
+#'   return(res) 
+#' }}
 #' 
 #' @encoding UTF-8
 #' @import SYNCSA
-#' @importFrom vegan procrustes rda adonis mantel vegdist
-#' @importFrom parallel makeCluster clusterApply stopCluster parRapply clusterExport
-#' @importFrom stats glm summary.lm as.formula fitted gaussian
-#' @aliases pcps.sig matrix.p.sig
+#' @importFrom vegan procrustes rda adonis adonis2 mantel vegdist
+#' @importFrom parallel makeCluster parLapply stopCluster
+#' @importFrom stats glm summary.lm cor anova
+#' @importFrom nlme lme gls
+#' @aliases pcps.sig matrix.p.sig print.pcpssig FUN.ADONIS FUN.ADONIS2.global FUN.ADONIS2.margin FUN.GLM FUN.MANTEL FUN.RDA FUN.GLS.marginal FUN.GLS.sequential FUN.LME.marginal FUN.LME.sequential
 #' @param comm Community data, with species as columns and sampling units as rows. This matrix 
 #' can contain either presence/absence or abundance data.
 #' @param phylodist Matrix containing phylogenetic distances between species.
-#' @param envir Environmental variables for each community, with variables as columns and 
-#' sampling units as rows.
-#' @param analysis Type of analysis. For the function pcps.sig \code{\link{glm}} or 
-#' \code{\link{rda}}, for matrix.p.sig function \code{\link{adonis}} or \code{\link{mantel}}.
-#' See Details.
 #' @param method Dissimilarity index, as accepted by \code{\link{vegdist}} (Default dist = "bray").
 #' @param squareroot Logical argument (TRUE or FALSE) to specify if use square root of 
 #' dissimilarity index (Default squareroot = TRUE).
-#' @param formula An object of class \code{\link{formula}} quotation marks used in GLM analysis. 
-#' See Details.
-#' @param family A description of the error distribution to be used in used in GLM analysis. 
-#' See \code{\link{family}} (Dafault family = gaussian).
-#' @param AsFactors Encode an environmental variable as factor used in GLM analysis. The sequence 
-#' is the same that in the environmental data matrix. See Details.
-#' @param pcps.choices PCPS used in RDA analysis (Default pcps.choices = c(1, 2, 3, 4)).
+#' @param FUN An object of class function to perform the analysis. See Details and Examples.
+#' @param choices Numeric vector to choose the PCPS used in analysis. See Details and Examples.
 #' @param runs Number of permutations for assessing significance.
-#' @param method.envir Resemblance index between communities based on environmental variables, 
-#' as accepted by vegdist used in Mantel analysis (Default method.envir = "euclidean")
-#' @param parallel Number of parallel processes.  Tip: use detectCores() (Default parallel = NULL).
-#' @param newClusters Logical argument (TRUE or FALSE) to specify if make new parallel 
-#' processes or use predefined socket cluster. Only if parallel is different of NULL (Default newClusters = TRUE).
-#' @param CL A predefined socket cluster done with parallel package.
-#' @return \item{model}{The model, an object of class glm, rda, adonis or mantel.}
-#' \item{envir_class}{The class of each variable in environmental data in glm.}
-#' \item{formula}{The formula used in glm.} \item{statistic.obs}{Observed F value or r value.}
+#' @param parallel Number of parallel processes or a predefined socket cluster done with parallel package. Tip: use detectCores() (Default parallel = NULL).
+#' @param ... Other arguments passed to FUN function. See Details and Examples.
+#' @param x An object of class pcpssig or other object to apply the function passed by FUN. See Details.
+#' @param envir A matrix or data.frame with environmental variables for each community, with variables as columns and 
+#' sampling units as rows. See Details and Examples.
+#' @param method.p Resemblance index between communities based on P matrix, as accepted by \code{\link{vegdist}}. 
+#' Used in FUN.MANTEL, FUN.ADONIS, FUN.ADONIS2.global and FUN.ADONIS2.margin analysis. See Details and Examples.
+#' @param sqrt.p Logical argument (TRUE or FALSE) to specify if use square root of dissimilarity P matrix. Used in
+#' FUN.MANTEL, FUN.ADONIS, FUN.ADONIS2.global and FUN.ADONIS2.margin analysis. See Details and Examples (Default sqrt.p = TRUE). 
+#' @param method.envir Resemblance index between communities based on environmental variables, as accepted by \code{\link{vegdist}}.
+#' Used in FUN.MANTEL analysis. See Details and Examples.
+#' @param formula An object of class \code{\link{formula}} quotation marks. Used in FUN.GLM, FUN.ADONIS, 
+#' FUN.ADONIS2.global, FUN.ADONIS2.margin, FUN.GLS.marginal, FUN.GLS.sequential, FUN.LME.marginal and FUN.LME.sequential analysis. See Details and Examples.
+#' @param return.model Must not be specified. See Details.
+#' @return \item{call}{The arguments used.}
+#' \item{P.obs}{Phylogeny-weighted species composition matrix.}
+#' \item{PCPS.obs}{The principal coordinates of phylogenetic structure (PCPS)}
+#' \item{model}{The observed model returned by FUN, an object of class glm, rda, adonis, adonis2 or mantel to predefined function.}
+#' \item{fun}{The funtion used.}
+#' \item{statistic.null.site}{A matrix with null statistic for site shuffle null model.}
+#' \item{statistic.null.taxa}{A matrix with null statistic for taxa shuffle null model.}
+#' \item{obs.statistic}{Observed statistic, F value or r value to predefined function.}
 #' \item{p.site.shuffle}{The p value for the site shuffle null model.}
 #' \item{p.taxa.shuffle}{The p value for the taxa shuffle null model.}
 #' @author Vanderlei Julio Debastiani <vanderleidebastiani@@yahoo.com.br>
 #' @seealso \code{\link{matrix.p}}, \code{\link{pcps}}, \code{\link{procrustes}}, 
-#' \code{\link{glm}}, \code{\link{rda}}, \code{\link{adonis}}, \code{\link{mantel}} 
+#' \code{\link{glm}}, \code{\link{rda}}, \code{\link{adonis}}, \code{\link{adonis2}}, 
+#' \code{\link{mantel}}
 #' @references Duarte, L.S. (2011). Phylogenetic habitat filtering influences forest 
 #' nucleation in grasslands. Oikos, 120, 208:215.
+#' 
+#' Duarte, L.S. (2016). Dissecting phylogenetic fuzzy weighting: theory and application 
+#' in metacommunity phylogenetics. Methods in Ecology and Evolution, 7(8), 937:946.
 #' @keywords PCPS
 #' @examples
-#' 
 #' data(flona)
-#' pcps.sig(flona$community, flona$phylo, flona$environment, analysis = "glm",
-#'         formula = "pcps.1~alt", runs = 99)
-#' matrix.p.sig(flona$community,flona$phylo,flona$environment[, 2, drop = FALSE],
-#'         analysis = "adonis", runs = 99)
 #' 
+#' # MANTEL
+#' res <- matrix.p.sig(flona$community,flona$phylo, FUN = FUN.MANTEL, method.p = "bray", 
+#'              method.envir = "euclidean", envir = flona$environment[, 2, drop = FALSE], runs = 99)
+#' res
 #' 
+#' # ADONIS
+#' res <- matrix.p.sig(flona$community,flona$phylo, FUN = FUN.ADONIS, method.p = "bray", 
+#'              formula = p.dist~temp, envir = flona$environment[, 2, drop = FALSE], runs = 99)
+#' res
+#' 
+#' # ADONIS2
+#' res <- matrix.p.sig(flona$community,flona$phylo, FUN = FUN.ADONIS2.global, 
+#'              envir = flona$environment, formula = p.dist~temp+alt, 
+#'              method.p = "bray", runs = 99)
+#' res            
+#' res <- matrix.p.sig(flona$community,flona$phylo, FUN = FUN.ADONIS2.margin, 
+#'               envir = flona$environment, formula = p.dist~temp+alt, 
+#'               method.p = "bray", runs = 99)
+#' res            
+#' 
+#' # GLM
+#' res <- pcps.sig(flona$community, flona$phylo, FUN = FUN.GLM, method = "bray", 
+#'          formula = pcps.1~temp, envir = flona$environment, choices = 1, runs = 99)
+#' res
+#' summary.lm(res$model)
+#' 
+#' # RDA
+#' res <- pcps.sig(flona$community, flona$phylo, FUN = FUN.RDA, envir = flona$environment, 
+#'          choices = 1:2, runs = 99)
+#' res
+#'
+#' # GLS
+#' res <- pcps.sig(flona$community, flona$phylo, FUN = FUN.GLS.marginal, 
+#'          formula = pcps.1~temp, envir = flona$environment, choices = 1, runs = 99)
+#' res
+#' anova(res$model, type = "marginal")
+#' res <- pcps.sig(flona$community, flona$phylo, FUN = FUN.GLS.marginal, 
+#'          formula = pcps.1~temp, envir = flona$environment, 
+#'          correlation = nlme::corCAR1(form = ~1:39), choices = 1, runs = 99)
+#' res
+#' anova(res$model, type = "marginal")
+#' 
+#' # LME
+#' res <- pcps.sig(flona$community, flona$phylo, FUN = FUN.LME.marginal, formula = pcps.1~alt, 
+#'          envir = flona$environment, random = ~1|temp, choices = 1, runs = 99)
+#' res
+#' anova(res$model, type = "marginal")
+#' 
+#' res <- pcps.sig(flona$community, flona$phylo, FUN = FUN.LME.sequential, formula = pcps.1~alt,
+#'          envir = flona$environment, random = ~1|temp, choices = 1, runs = 99)
+#' res
+#' anova(res$model, type = "sequential")
+#'  
 #' @export
-pcps.sig<-function(comm, phylodist, envir, analysis = c("glm", "rda"), method = "bray", squareroot = TRUE, formula, family = stats::gaussian, AsFactors = NULL, pcps.choices = c(1, 2, 3, 4), runs = 999, parallel = NULL, newClusters = TRUE, CL =  NULL){
+pcps.sig <- function (comm, phylodist, method = "bray", squareroot = TRUE, FUN, choices, runs = 999, parallel = NULL, ...) 
+{
   RES <- list(call = match.call())
-  F.rda <- function (x){
-    Chi.z <- x$CCA$tot.chi
-    q <- x$CCA$qrank
-    Chi.xz <- x$CA$tot.chi
-    r <- nrow(x$CA$Xbar) - x$CCA$QR$rank - 1
-    F.0 <- (Chi.z/q)/(Chi.xz/r)
-    F.0 <- round(F.0, 12)
-    return(F.0)
+  res.pcps.null <- matrix.p.null(comm, phylodist, runs = runs, calcpcps = TRUE, adjpcps = TRUE, choices = choices)
+  RES$PCPS.obs <- res.pcps.null$pcps.obs
+  statistic.obs <- sapply(list(res.pcps.null$pcps.obs[, choices, drop = FALSE]), FUN = FUN, simplify = FALSE, return.model = TRUE, ...)
+  RES$model <- statistic.obs[[1]]$mod.obs
+  RES$fun <- FUN
+  RES$obs.statistic <- statistic.obs[[1]]$statistic.obs
+  newClusters <- FALSE
+  if (is.numeric(parallel)) {
+    parallel <- parallel::makeCluster(parallel, type = "PSOCK")
+    newClusters <- TRUE
   }
-  Analysis <- c("glm", "rda")
-  analysis <- pmatch(analysis, Analysis)
-  if (length(analysis) != 1 | (is.na(analysis[1]))) {
-    stop("\n Invalid analysis. Only one argument is accepted in analysis \n")
+  if (!inherits(parallel, "cluster")) {
+    statistic.null.site <- sapply(sapply(res.pcps.null$pcps.null.site, function(x, choices) x[,choices,drop = FALSE], simplify = FALSE, choices = choices), FUN = FUN, simplify = FALSE, ...)
+    statistic.null.taxa <- sapply(res.pcps.null$pcps.null.taxa.adj, FUN = FUN, simplify = FALSE, ...)
   }
-  if(!is.null(CL)){
-    parallel <- length(CL)
+  else {
+    statistic.null.site <- parLapply(parallel, sapply(res.pcps.null$pcps.null.site, function(x, choices) x[,choices,drop = FALSE], simplify = FALSE, choices = choices), fun = FUN, ...)
+    statistic.null.taxa <- parLapply(parallel, res.pcps.null$pcps.null.taxa.adj, fun = FUN, ...)
   }
-  if(!is.null(parallel) & newClusters){
-    CL <- parallel::makeCluster(parallel, type = "PSOCK")
+  if (newClusters) {
+    parallel::stopCluster(parallel)
   }
-  if(analysis == 1){
-    envir <- as.data.frame(envir)
-    if(!is.null(AsFactors)){
-      for(i in AsFactors){
-        envir[,i] <- as.factor(envir[,i])
-      }
-    }
-    envir.class <- SYNCSA::var.type(envir)
-    RES$envir.class <- envir.class
-  }
-  pcps.obs <- pcps(comm, phylodist, method = method, squareroot = squareroot, correlations = FALSE)
-  if(analysis == 1){
-    mod.obs <- stats::glm(formula, data = data.frame(envir, pcps.obs$vectors), family = family)
-    f.obs <- stats::summary.lm(mod.obs)$fstatistic[1]
-    y.name <- as.character(stats::as.formula(formula)[[2]])
-    vectors.obs <- pcps.obs$vectors[, y.name, drop = FALSE]
-    RES$formula <- formula
-  }
-  if(analysis == 2){
-    envir <- as.matrix(envir)
-    vectors.obs <- pcps.obs$vectors[, pcps.choices, drop = FALSE]
-    mod.obs <- vegan::rda(vectors.obs~envir)
-    f.obs <- F.rda(mod.obs)
-  }
-  RES$model <- mod.obs
-  RES$statistic.obs <- f.obs
-  seqpermutation <- SYNCSA::permut.vector(ncol(phylodist), nset = runs)
-  seqpermutation2 <- SYNCSA::permut.vector(nrow(vectors.obs), nset = runs)
-  ptest <- function(i, seqperm1, seqperm2, comm, phylodist, envir, method, squareroot, analysis, vectors.obs, formula, y.name, family, pcps.choices){
-    F.rda <- function (x){
-      Chi.z <- x$CCA$tot.chi
-      q <- x$CCA$qrank
-      Chi.xz <- x$CA$tot.chi
-      r <- nrow(x$CA$Xbar) - x$CCA$QR$rank - 1
-      F.0 <- (Chi.z/q)/(Chi.xz/r)
-      F.0 <- round(F.0, 12)
-      return(F.0)
-    }
-    samp <- seqperm1[[i]]
-    samp2 <- seqperm2[[i]]
-    pcps.null <- PCPS::pcps(comm, phylodist[samp, samp], method = method, squareroot = squareroot, correlations = FALSE)
-    if(analysis == 1){
-      vector.null.taxa <- stats::fitted(vegan::procrustes(vectors.obs, pcps.null$vectors[, y.name, drop = FALSE], symmetric = TRUE, choices = 1))
-      colnames(vector.null.taxa) <- y.name
-      mod.null.taxa <- stats::glm(formula, data = data.frame(vector.null.taxa, envir), family = family)
-      mod.null.site <- stats::glm(formula, data = data.frame(vectors.obs[samp2, , drop = FALSE], envir), family = family)
-      F.null.taxa <- stats::summary.lm(mod.null.taxa)$fstatistic[1]
-      F.null.site <- stats::summary.lm(mod.null.site)$fstatistic[1]
-    }
-    if(analysis == 2){
-      if(length(pcps.choices)==1){
-        vectors.null.taxa <- stats::fitted(vegan::procrustes(vectors.obs, pcps.null$vectors[, pcps.choices, drop = FALSE], symmetric = TRUE, choices = 1))
-      } else {
-        vectors.null.taxa <- stats::fitted(vegan::procrustes(vectors.obs, pcps.null$vectors[, pcps.choices, drop = FALSE], symmetric = TRUE))
-      }
-      mod.null.taxa <- vegan::rda(vectors.null.taxa~envir)
-      mod.null.site <- vegan::rda(vectors.obs[samp2, , drop = FALSE]~envir)
-      F.null.taxa <- F.rda(mod.null.taxa)
-      F.null.site <- F.rda(mod.null.site)
-    }
-    return(cbind(F.null.taxa, F.null.site))
-  }
-  seqpermutation <- lapply(seq_len(nrow(seqpermutation)), function(i) seqpermutation[i,])
-  seqpermutation2 <- lapply(seq_len(nrow(seqpermutation2)), function(i) seqpermutation2[i,])
-  seqpermutation0 <- as.list(seq_len(runs))
-  if(is.null(parallel)){
-    res.F.null<-vector("list",runs)
-    for (i in 1:runs) {
-      if(analysis == 1){
-        res.F.null[[i]] <- ptest(i = seqpermutation0[[i]], seqperm1 = seqpermutation, seqperm2 = seqpermutation2, comm = comm, phylodist = phylodist, envir = envir, method = method, squareroot = squareroot, analysis = 1, vectors.obs = vectors.obs, formula = formula, y.name = y.name, family = family)   
-      }
-      if(analysis == 2){
-        res.F.null[[i]] <- ptest(i = seqpermutation0[[i]], seqperm1 = seqpermutation, seqperm2 = seqpermutation2,  comm = comm, phylodist = phylodist, envir = envir, method = method, squareroot = squareroot, analysis = 2, vectors.obs = vectors.obs, pcps.choices = pcps.choices)   
-      }
-    }
-  } else {
-    if(analysis == 1){
-      res.F.null<-parallel::clusterApply(CL, seqpermutation0, ptest, seqperm1 = seqpermutation, seqperm2 = seqpermutation2, comm = comm, phylodist = phylodist, envir = envir, method = method, squareroot = squareroot, analysis = 1, vectors.obs = vectors.obs, formula = formula, y.name = y.name, family = family)
-    }
-    if(analysis == 2){
-      res.F.null <- parallel::clusterApply(CL, seqpermutation0, ptest, seqperm1 = seqpermutation, seqperm2 = seqpermutation2, comm = comm, phylodist = phylodist, envir = envir, method = method, squareroot = squareroot, analysis = 2, vectors.obs = vectors.obs, pcps.choices = pcps.choices) 
-    }
-  } 
-  F.null.taxa <- sapply(seq_len(runs), function(i) res.F.null[[i]][1,1])
-  F.null.site <- sapply(seq_len(runs), function(i) res.F.null[[i]][1,2]) 
-  if(!is.null(parallel) & newClusters){
-    parallel::stopCluster(CL)
-  }
-  p.taxa.shuffle <- (sum(ifelse(F.null.taxa>=f.obs, 1, 0))+1)/(runs+1)
-  p.site.shuffle <- (sum(ifelse(F.null.site>=f.obs, 1, 0))+1)/(runs+1)
-  RES$p.taxa.shuffle <- p.taxa.shuffle
-  RES$p.site.shuffle <- p.site.shuffle
+  RES$statistic.null.site <- do.call("rbind", statistic.null.site)
+  RES$statistic.null.taxa <- do.call("rbind", statistic.null.taxa)
+  RES$p.site.shuffle <- as.vector(rbind((apply(sweep(RES$statistic.null.site, 2, RES$obs.statistic, ">="), 2, sum)+1)/(runs + 1)))
+  RES$p.taxa.shuffle <- as.vector(rbind((apply(sweep(RES$statistic.null.taxa, 2, RES$obs.statistic, ">="), 2, sum)+1)/(runs + 1)))
+  class(RES) <- "pcpssig"
   return(RES)
 }

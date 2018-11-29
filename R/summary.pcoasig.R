@@ -1,7 +1,7 @@
 #' @rdname pcoa.sig
 #' @encoding UTF-8
 #' @export
-summary.pcoasig<-function(object, choices = c(1, 2), ...){
+summary.pcoasig <- function(object, choices = c(1, 2), ...){
   if (length(choices) != 2) {
     stop("\n Choices must have length equal to two \n")
   }

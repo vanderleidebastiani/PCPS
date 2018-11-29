@@ -27,10 +27,7 @@
 #' initial sample size is equal to total sample size (Default n.start = NULL).
 #' @param by Sampling unit is added at each sampling step (Default by = 1). 
 #' @param iterations Number of permutations to assess significance (Default iterations = 1000).
-#' @param parallel Number of parallel processes.  Tip: use detectCores() (Default parallel = NULL).
-#' @param newClusters Logical argument (TRUE or FALSE) to specify if make new parallel 
-#' processes or use predefined socket cluster. Only if parallel is different of NULL (Default newClusters = TRUE).
-#' @param CL A predefined socket cluster done with parallel package.
+#' @param parallel Number of parallel processes or a predefined socket cluster done with parallel package. Tip: use detectCores() (Default parallel = NULL).
 #' @param object An object of class pcoasig.
 #' @param x An object of class pcoasig.
 #' @param choices Axes for re-scaling. Choices must have length equal to two (Default choices = c(1, 2)).
@@ -63,9 +60,9 @@
 #' summary(res)$scores
 #'
 #' @export
-pcoa.sig<-function (data, method = "gower", squareroot = FALSE, axis = 6, n.start = NULL, by = 1, iterations = 1000, parallel = NULL, newClusters = TRUE, CL =  NULL){
+pcoa.sig<-function (data, method = "gower", squareroot = FALSE, axis = 6, n.start = NULL, by = 1, iterations = 1000, parallel = NULL){
 	RES <- list(call = match.call())
-	data<-as.matrix(data)
+	data <- as.matrix(data)
 	colnames(data) <- colnames(data, do.NULL = FALSE, prefix = "v.")
 	rownames(data) <- rownames(data, do.NULL = FALSE, prefix = "u")
 	n.row <- nrow(data)
@@ -133,22 +130,21 @@ pcoa.sig<-function (data, method = "gower", squareroot = FALSE, axis = 6, n.star
 		res$matrix.randon <- matrix.randon
 	return(res)
 	}
-	if(!is.null(CL)){
-		parallel<-length(CL)
-	}
-	if(!is.null(parallel) & newClusters){
-		CL <- parallel::makeCluster(parallel, type = "PSOCK")
+	newClusters <- FALSE
+	if (is.numeric(parallel)) {
+	  parallel <- parallel::makeCluster(parallel, type = "PSOCK")
+	  newClusters <- TRUE
 	}
 	m <- 0
 	for (r in seq.samp) {
 		m <- m+1
-		if(is.null(parallel)){
+		if(!inherits(parallel, "cluster")){
 			res.temp<-vector("list",iterations)
 			for(i in 1:iterations){
 				res.temp[[i]] <- ptest(r, data = data, method = method, squareroot = squareroot, axis = axis, vectors = vectors)
 			}
 		} else {
-			res.temp <- parallel::parRapply(CL, matrix(r, iterations, 1), ptest, data = data, method = method, squareroot = squareroot, axis = axis, vectors = vectors)
+			res.temp <- parallel::parRapply(parallel, matrix(r, iterations, 1), ptest, data = data, method = method, squareroot = squareroot, axis = axis, vectors = vectors)
 		}
 		matrix.1 <- t(sapply(seq_len(iterations), function(i) res.temp[[i]]$matrix.1))
 		matrix.2 <- t(sapply(seq_len(iterations), function(i) res.temp[[i]]$matrix.2))
@@ -160,8 +156,8 @@ pcoa.sig<-function (data, method = "gower", squareroot = FALSE, axis = 6, n.star
 		n.permut[m, ] <- colSums(matrix.1)
 		n.randon[m, ] <- colSums(matrix.2)
 	}
-	if(!is.null(parallel) & newClusters){
-		parallel::stopCluster(CL)
+	if (newClusters) {
+	  parallel::stopCluster(parallel)
 	}
 	RES$values <- pco.ref$values
 	RES$vectors <- pco.ref$vectors

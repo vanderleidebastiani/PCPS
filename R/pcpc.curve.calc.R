@@ -1,4 +1,5 @@
 #' @rdname pcps.curve
+#' @include pcps.curve.R
 #' @encoding UTF-8
 #' @export
 pcpc.curve.calc <- function(values, vectors, mt){

@@ -7,14 +7,10 @@
 \alias{print.pcoasig}
 \alias{summary.pcoasig}
 \alias{print.summarypcoasig}
-\alias{print.pcoasig}
-\alias{print.summarypcoasig}
-\alias{summary.pcoasig}
 \title{Significant dimensions in principal coordinate analysis}
 \usage{
 pcoa.sig(data, method = "gower", squareroot = FALSE, axis = 6,
-  n.start = NULL, by = 1, iterations = 1000, parallel = NULL,
-  newClusters = TRUE, CL = NULL)
+  n.start = NULL, by = 1, iterations = 1000, parallel = NULL)
 
 \method{print}{pcoasig}(x, ...)
 
@@ -39,12 +35,7 @@ initial sample size is equal to total sample size (Default n.start = NULL).}
 
 \item{iterations}{Number of permutations to assess significance (Default iterations = 1000).}
 
-\item{parallel}{Number of parallel processes.  Tip: use detectCores() (Default parallel = NULL).}
-
-\item{newClusters}{Logical argument (TRUE or FALSE) to specify if make new parallel 
-processes or use predefined socket cluster. Only if parallel is different of NULL (Default newClusters = TRUE).}
-
-\item{CL}{A predefined socket cluster done with parallel package.}
+\item{parallel}{Number of parallel processes or a predefined socket cluster done with parallel package. Tip: use detectCores() (Default parallel = NULL).}
 
 \item{x}{An object of class pcoasig.}
 

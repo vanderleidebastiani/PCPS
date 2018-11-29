@@ -38,10 +38,7 @@
 #' @param runs Number of randomizations.
 #' @param progressbar Logical argument (TRUE or FALSE) to specify if display a progress bar 
 #' on the R console (Default progressbar = FALSE).
-#' @param parallel Number of parallel processes.  Tip: use detectCores() (Default parallel = NULL).
-#' @param newClusters Logical argument (TRUE or FALSE) to specify if make new parallel 
-#' processes or use predefined socket cluster. Only if parallel is different of NULL (Default newClusters = TRUE).
-#' @param CL A predefined socket cluster done with parallel package.
+#' @param parallel Number of parallel processes or a predefined socket cluster done with parallel package. Tip: use detectCores() (Default parallel = NULL).
 #' @param values The eigenvalues, relative eigenvalues and cumulative relative eigenvalues returned by \code{\link{pcps}}. 
 #' @param vectors The principal coordinates of phylogenetic structure returned by \code{\link{pcps}}.
 #' @param mt Matrix containing trait average at community level for one trait.
@@ -72,7 +69,7 @@
 #' plot(res, draw.model = "ts", type = "b", col = "red")
 #'
 #' @export
-pcps.curve<-function(comm, phylodist, trait, method = "bray", squareroot = TRUE, ranks = TRUE, null.model.ts = FALSE, null.model.bm = FALSE, tree, runs = 99, progressbar = FALSE, parallel = NULL, newClusters = TRUE, CL =  NULL){
+pcps.curve <- function(comm, phylodist, trait, method = "bray", squareroot = TRUE, ranks = TRUE, null.model.ts = FALSE, null.model.bm = FALSE, tree, runs = 99, progressbar = FALSE, parallel = NULL){  
 	RES <- list(call= match.call())
 	if(ncol(trait)!=1){
 		stop("\n Only one trait is allowed\n")
@@ -91,8 +88,10 @@ pcps.curve<-function(comm, phylodist, trait, method = "bray", squareroot = TRUE,
 			BarRuns <- runs
 		}
 	}
-	if(!is.null(CL)){
-		parallel <- length(CL)
+	newClusters <- FALSE
+	if (is.numeric(parallel)) {
+	  parallel <- parallel::makeCluster(parallel, type = "PSOCK")
+	  newClusters <- TRUE
 	}
 	ptest.ts <- function(samp, comm, phylodist, method, squareroot, mt){
 		pcps.null <- PCPS::pcps(comm, phylodist[samp, samp], method = method, squareroot = squareroot, correlations = FALSE)
@@ -106,42 +105,39 @@ pcps.curve<-function(comm, phylodist, trait, method = "bray", squareroot = TRUE,
         res <- PCPS::pcpc.curve.calc(values, vectors, MT.null)
 		return(res)
 	}
-	if((null.model.ts | null.model.bm) & !is.null(parallel) & newClusters){
-		CL <- parallel::makeCluster(parallel, type = "PSOCK")
-	}	
 	if(null.model.ts){
 		seqpermutation <- SYNCSA::permut.vector(ncol(phylodist), nset = runs)
 		seqpermutation <- lapply(seq_len(nrow(seqpermutation)), function(i) seqpermutation[i,])
-		if(is.null(parallel)){
+		if(!inherits(parallel, "cluster")){
 	    	res.curve.null.ts<-vector("list",runs)
 		    for (i in 1:runs) {
 	    	    res.curve.null.ts[[i]] <- ptest.ts(samp = seqpermutation[[i]], comm = comm, phylodist = phylodist, method = method, squareroot = squareroot, mt = MT)   
 	    	    if(progressbar){
-					    SYNCSA::ProgressBAR(i,BarRuns,style=3)
+					    SYNCSA::ProgressBAR(i, BarRuns, style = 3)
 				}
     		}
 		} else {
-			res.curve.null.ts <- parallel::clusterApply(CL, seqpermutation, ptest.ts, comm = comm, phylodist = phylodist, method = method, squareroot = squareroot, mt = MT)		
+			res.curve.null.ts <- parallel::clusterApply(parallel, seqpermutation, ptest.ts, comm = comm, phylodist = phylodist, method = method, squareroot = squareroot, mt = MT)		
 		}	
 		RES$curve.null.ts <- res.curve.null.ts
 	}
 	if(null.model.bm){
 		seqpermutation <- vector("list",runs)
-		if(is.null(parallel)){
-			res.curve.null.bm <- vector("list",runs)
-		    for (i in 1:runs) {
-	    	    res.curve.null.bm[[i]] <- ptest.bm(NULL, tree, comm, res.values, res.vectors, ranks = ranks)
-	    	    if(progressbar){
-					SYNCSA::ProgressBAR(i+runs,BarRuns,style=3)
-				}
-    		}
+		if(!inherits(parallel, "cluster")){
+		  res.curve.null.bm <- vector("list",runs)
+		  for (i in 1:runs) {
+		    res.curve.null.bm[[i]] <- ptest.bm(NULL, tree, comm, res.values, res.vectors, ranks = ranks)
+		    if(progressbar){
+		      SYNCSA::ProgressBAR(i+runs, BarRuns, style = 3)
+		    }
+		  }
 		} else {
-			res.curve.null.bm <- parallel::clusterApply(CL, seqpermutation, ptest.bm, tree = tree, comm = comm, values = res.values, vectors = res.vectors, ranks = ranks)		
+		  res.curve.null.bm <- parallel::clusterApply(parallel, seqpermutation, ptest.bm, tree = tree, comm = comm, values = res.values, vectors = res.vectors, ranks = ranks)		
 		}
 		RES$curve.null.bm <- res.curve.null.bm
 	}
-	if((null.model.ts | null.model.bm) & !is.null(parallel) & newClusters){
-		parallel::stopCluster(CL)
+	if (newClusters) {
+	  parallel::stopCluster(parallel)
 	}
 	class(RES) <- "pcpscurve"
 	return(RES)	

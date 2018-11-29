@@ -9,18 +9,13 @@
 \alias{print.summarypcps}
 \alias{plot.pcps}
 \alias{scores.pcps}
-\alias{plot.pcps}
-\alias{print.pcps}
-\alias{print.summarypcps}
-\alias{scores.pcps}
-\alias{summary.pcps}
 \title{Principal Coordinates of Phylogenetic Structure}
 \usage{
 pcps(comm, phylodist, method = "bray", squareroot = TRUE,
   correlations = TRUE)
 
-\method{plot}{pcps}(x, groups = NULL, choices = c(1, 2), display = "text",
-  showlabel = TRUE, ...)
+\method{plot}{pcps}(x, groups = NULL, choices = c(1, 2),
+  display = "text", showlabel = TRUE, ...)
 
 \method{print}{pcps}(x, ...)
 
