@@ -20,8 +20,8 @@ matrix.p.sig <- function (comm, phylodist, FUN, runs = 999, parallel = NULL, ...
     statistic.null.site <- sapply(res.pcps.null$P.null.site, FUN = FUN, simplify = FALSE, ...)
   }
   else {
-    statistic.null.taxa <- parLapply(parallel, res.pcps.null$P.null.taxa, fun = FUN, ...)
-    statistic.null.site <- parLapply(parallel, res.pcps.null$P.null.site, fun = FUN, ...)
+    statistic.null.taxa <- parallel::parLapply(parallel, res.pcps.null$P.null.taxa, fun = FUN, ...)
+    statistic.null.site <- parallel::parLapply(parallel, res.pcps.null$P.null.site, fun = FUN, ...)
   }
   if (newClusters) {
     parallel::stopCluster(parallel)

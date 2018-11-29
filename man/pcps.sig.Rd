@@ -83,7 +83,7 @@ Used in FUN.MANTEL, FUN.ADONIS, FUN.ADONIS2.global and FUN.ADONIS2.margin analys
 \item{sqrt.p}{Logical argument (TRUE or FALSE) to specify if use square root of dissimilarity P matrix. Used in
 FUN.MANTEL, FUN.ADONIS, FUN.ADONIS2.global and FUN.ADONIS2.margin analysis. See Details and Examples (Default sqrt.p = TRUE).}
 
-\item{formula}{An object of class \code{\link{formula}} quotation marks. Used in FUN.GLM, FUN.ADONIS, 
+\item{formula}{An object of class \code{\link{formula}}. Used in FUN.GLM, FUN.ADONIS, 
 FUN.ADONIS2.global, FUN.ADONIS2.margin, FUN.GLS.marginal, FUN.GLS.sequential, FUN.LME.marginal and FUN.LME.sequential analysis. See Details and Examples.}
 
 \item{return.model}{Must not be specified. See Details.}
@@ -95,7 +95,7 @@ Used in FUN.MANTEL analysis. See Details and Examples.}
 \item{call}{The arguments used.}
 \item{P.obs}{Phylogeny-weighted species composition matrix.}
 \item{PCPS.obs}{The principal coordinates of phylogenetic structure (PCPS)}
-\item{model}{The observed model returned by FUN, an object of class glm, rda, adonis, adonis2 or mantel to predefined function.}
+\item{model}{The observed model returned by FUN, an object of class glm, gls, lme, rda, adonis, adonis2 or mantel to predefined function.}
 \item{fun}{The funtion used.}
 \item{statistic.null.site}{A matrix with null statistic for site shuffle null model.}
 \item{statistic.null.taxa}{A matrix with null statistic for taxa shuffle null model.}
@@ -272,6 +272,7 @@ res <- pcps.sig(flona$community, flona$phylo, FUN = FUN.GLS.marginal,
          formula = pcps.1~temp, envir = flona$environment, choices = 1, runs = 99)
 res
 anova(res$model, type = "marginal")
+
 res <- pcps.sig(flona$community, flona$phylo, FUN = FUN.GLS.marginal, 
          formula = pcps.1~temp, envir = flona$environment, 
          correlation = nlme::corCAR1(form = ~1:39), choices = 1, runs = 99)

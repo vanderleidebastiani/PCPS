@@ -155,13 +155,13 @@
 #' FUN.MANTEL, FUN.ADONIS, FUN.ADONIS2.global and FUN.ADONIS2.margin analysis. See Details and Examples (Default sqrt.p = TRUE). 
 #' @param method.envir Resemblance index between communities based on environmental variables, as accepted by \code{\link{vegdist}}.
 #' Used in FUN.MANTEL analysis. See Details and Examples.
-#' @param formula An object of class \code{\link{formula}} quotation marks. Used in FUN.GLM, FUN.ADONIS, 
+#' @param formula An object of class \code{\link{formula}}. Used in FUN.GLM, FUN.ADONIS, 
 #' FUN.ADONIS2.global, FUN.ADONIS2.margin, FUN.GLS.marginal, FUN.GLS.sequential, FUN.LME.marginal and FUN.LME.sequential analysis. See Details and Examples.
 #' @param return.model Must not be specified. See Details.
 #' @return \item{call}{The arguments used.}
 #' \item{P.obs}{Phylogeny-weighted species composition matrix.}
 #' \item{PCPS.obs}{The principal coordinates of phylogenetic structure (PCPS)}
-#' \item{model}{The observed model returned by FUN, an object of class glm, rda, adonis, adonis2 or mantel to predefined function.}
+#' \item{model}{The observed model returned by FUN, an object of class glm, gls, lme, rda, adonis, adonis2 or mantel to predefined function.}
 #' \item{fun}{The funtion used.}
 #' \item{statistic.null.site}{A matrix with null statistic for site shuffle null model.}
 #' \item{statistic.null.taxa}{A matrix with null statistic for taxa shuffle null model.}
@@ -217,6 +217,7 @@
 #'          formula = pcps.1~temp, envir = flona$environment, choices = 1, runs = 99)
 #' res
 #' anova(res$model, type = "marginal")
+#' 
 #' res <- pcps.sig(flona$community, flona$phylo, FUN = FUN.GLS.marginal, 
 #'          formula = pcps.1~temp, envir = flona$environment, 
 #'          correlation = nlme::corCAR1(form = ~1:39), choices = 1, runs = 99)
@@ -238,7 +239,7 @@
 pcps.sig <- function (comm, phylodist, method = "bray", squareroot = TRUE, FUN, choices, runs = 999, parallel = NULL, ...) 
 {
   RES <- list(call = match.call())
-  res.pcps.null <- matrix.p.null(comm, phylodist, runs = runs, calcpcps = TRUE, adjpcps = TRUE, choices = choices)
+  res.pcps.null <- matrix.p.null(comm, phylodist, runs = runs, calcpcps = TRUE, adjpcps = TRUE, choices = choices, method = method, squareroot = squareroot)
   RES$PCPS.obs <- res.pcps.null$pcps.obs
   statistic.obs <- sapply(list(res.pcps.null$pcps.obs[, choices, drop = FALSE]), FUN = FUN, simplify = FALSE, return.model = TRUE, ...)
   RES$model <- statistic.obs[[1]]$mod.obs
@@ -254,8 +255,8 @@ pcps.sig <- function (comm, phylodist, method = "bray", squareroot = TRUE, FUN, 
     statistic.null.taxa <- sapply(res.pcps.null$pcps.null.taxa.adj, FUN = FUN, simplify = FALSE, ...)
   }
   else {
-    statistic.null.site <- parLapply(parallel, sapply(res.pcps.null$pcps.null.site, function(x, choices) x[,choices,drop = FALSE], simplify = FALSE, choices = choices), fun = FUN, ...)
-    statistic.null.taxa <- parLapply(parallel, res.pcps.null$pcps.null.taxa.adj, fun = FUN, ...)
+    statistic.null.site <- parallel::parLapply(parallel, sapply(res.pcps.null$pcps.null.site, function(x, choices) x[,choices,drop = FALSE], simplify = FALSE, choices = choices), fun = FUN, ...)
+    statistic.null.taxa <- parallel::parLapply(parallel, res.pcps.null$pcps.null.taxa.adj, fun = FUN, ...)
   }
   if (newClusters) {
     parallel::stopCluster(parallel)
