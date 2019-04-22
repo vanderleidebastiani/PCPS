@@ -146,6 +146,7 @@
 #' @param runs Number of permutations for assessing significance.
 #' @param parallel Number of parallel processes or a predefined socket cluster done with parallel package. Tip: use detectCores() (Default parallel = NULL).
 #' @param ... Other arguments passed to FUN function. See Details and Examples.
+#' @param newname New name to be replaced in object returned by \code{\link{matrix.p.null}} (Default newname = "pcps").
 #' @param x An object of class pcpssig or other object to apply the function passed by FUN. See Details.
 #' @param envir A matrix or data.frame with environmental variables for each community, with variables as columns and 
 #' sampling units as rows. See Details and Examples.
@@ -236,10 +237,11 @@
 #' anova(res$model, type = "sequential")
 #'  
 #' @export
-pcps.sig <- function (comm, phylodist, method = "bray", squareroot = TRUE, FUN, choices, runs = 999, parallel = NULL, ...) 
+pcps.sig <- function (comm, phylodist, method = "bray", squareroot = TRUE, FUN, choices, runs = 999, parallel = NULL, newname = "pcps", ...) 
 {
   RES <- list(call = match.call())
   res.pcps.null <- matrix.p.null(comm, phylodist, runs = runs, calcpcps = TRUE, adjpcps = TRUE, choices = choices, method = method, squareroot = squareroot)
+  res.pcps.null <- mutate.names.matrix.p.null(res.pcps.null, "pcps", newname)
   RES$PCPS.obs <- res.pcps.null$pcps.obs
   statistic.obs <- sapply(list(res.pcps.null$pcps.obs[, choices, drop = FALSE]), FUN = FUN, simplify = FALSE, return.model = TRUE, ...)
   RES$model <- statistic.obs[[1]]$mod.obs

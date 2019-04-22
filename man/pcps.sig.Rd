@@ -20,10 +20,11 @@
 \alias{FUN.LME.sequential}
 \title{Association between phylogeny-weighted species composition and environmental predictors}
 \usage{
-matrix.p.sig(comm, phylodist, FUN, runs = 999, parallel = NULL, ...)
+matrix.p.sig(comm, phylodist, FUN, runs = 999, parallel = NULL,
+  newname = "pcps", ...)
 
 pcps.sig(comm, phylodist, method = "bray", squareroot = TRUE, FUN,
-  choices, runs = 999, parallel = NULL, ...)
+  choices, runs = 999, parallel = NULL, newname = "pcps", ...)
 
 FUN.ADONIS(x, envir, method.p, sqrt.p = TRUE, formula,
   return.model = FALSE)
@@ -62,6 +63,8 @@ can contain either presence/absence or abundance data.}
 \item{runs}{Number of permutations for assessing significance.}
 
 \item{parallel}{Number of parallel processes or a predefined socket cluster done with parallel package. Tip: use detectCores() (Default parallel = NULL).}
+
+\item{newname}{New name to be replaced in object returned by \code{\link{matrix.p.null}} (Default newname = "pcps").}
 
 \item{...}{Other arguments passed to FUN function. See Details and Examples.}
 

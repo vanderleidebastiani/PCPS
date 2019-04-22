@@ -1,10 +1,11 @@
 #' @rdname pcps.sig
 #' @encoding UTF-8
 #' @export
-matrix.p.sig <- function (comm, phylodist, FUN, runs = 999, parallel = NULL, ...) 
+matrix.p.sig <- function (comm, phylodist, FUN, runs = 999, parallel = NULL, newname = "pcps", ...) 
 {
   RES <- list(call = match.call())
   res.pcps.null <- matrix.p.null(comm, phylodist, runs = runs, calcpcps = FALSE)
+  res.pcps.null <- mutate.names.matrix.p.null(res.pcps.null, "pcps", newname)
   RES$P.obs <- res.pcps.null$P.obs
   statistic.obs <- sapply(list(res.pcps.null$P.obs), FUN = FUN, simplify = FALSE, return.model = TRUE, ...)
   RES$model <- statistic.obs[[1]]$mod.obs
