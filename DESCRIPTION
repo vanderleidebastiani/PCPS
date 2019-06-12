@@ -34,6 +34,7 @@ Collate:
     'FUN.LME.sequential.R'
     'FUN.MANTEL.R'
     'FUN.RDA.R'
+    'check.formula.R'
     'define.clade.R'
     'matrix.p.null.R'
     'mutate.names.matrix.p.null.R'
