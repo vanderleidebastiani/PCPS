@@ -15,6 +15,18 @@
 #' linear mixed-effects models (LME, \code{\link{lme}}) or use set of axis for run a distance-based redundancy
 #' analysis (db-RDA, \code{\link{rda}}).
 #' 
+#' The sequence species show up in the community data matrix must be the 
+#' same as they show up in the phylogenetic distance matrix and, similarly, 
+#' the sequence of communities in the community data matrix must be the same as that in 
+#' the environmental data. The function \code{\link{organize.pcps}} organizes the data, placing the matrices of 
+#' community, phylogenetic distance and environmental data in the same order. The function use of function 
+#' organize.pcps is not requered for run the functions, but is recommended. In this way 
+#' the arguments comm and phylodist can be specified them as normal arguments or by passing
+#' them with the object returned by the function \code{\link{organize.pcps}} using, in this
+#' case only the argument comm. Using the object returned by organize.pcps, the comm argument 
+#' is used as an alternative way of entering to set all data.frames/matrices, and therefore 
+#' the arguments phylodist and envir must not be specified.
+#' 
 #' The significance is obtained via two null models, one that shuffles sites across the
 #' environmental gradient and another that shuffles terminal tips (taxa) across the phylogenetic
 #' tree. The first null model (site shuffle) shuffles the site position across the environmental
@@ -137,7 +149,16 @@
 #' @aliases pcps.sig matrix.p.sig print.pcpssig FUN.ADONIS FUN.ADONIS2.global FUN.ADONIS2.margin FUN.GLM FUN.MANTEL FUN.RDA FUN.GLS.marginal FUN.GLS.sequential FUN.LME.marginal FUN.LME.sequential
 #' @param comm Community data, with species as columns and sampling units as rows. This matrix 
 #' can contain either presence/absence or abundance data.
+#' Alternatively comm can be an object of class metacommunity.data, an alternative
+#' way to set all data.frames/matrices. When you use the class metacommunity.data the arguments
+#' phylodist and envir must not be specified. See details.
 #' @param phylodist Matrix containing phylogenetic distances between species.
+#' @param envir A matrix or data.frame with environmental variables for each community, with variables as columns and 
+#' sampling units as rows. See Details and Examples.
+#' @param checkdata Logical argument (TRUE or FALSE) to check if species
+#' sequence in the community data follows the same order as the one in the phylodist matrix 
+#' and if sampling units in the community data follows the same order as the one in the 
+#' environmental data (Default checkdata = TRUE).
 #' @param method Dissimilarity index, as accepted by \code{\link{vegdist}} (Default dist = "bray").
 #' @param squareroot Logical argument (TRUE or FALSE) to specify if use square root of 
 #' dissimilarity index (Default squareroot = TRUE).
@@ -148,8 +169,6 @@
 #' @param ... Other arguments passed to FUN function. See Details and Examples.
 #' @param newname New name to be replaced in object returned by \code{\link{matrix.p.null}} (Default newname = "pcps").
 #' @param x An object of class pcpssig or other object to apply the function passed by FUN. See Details.
-#' @param envir A matrix or data.frame with environmental variables for each community, with variables as columns and 
-#' sampling units as rows. See Details and Examples.
 #' @param method.p Resemblance index between communities based on P matrix, as accepted by \code{\link{vegdist}}. 
 #' Used in FUN.MANTEL, FUN.ADONIS, FUN.ADONIS2.global and FUN.ADONIS2.margin analysis. See Details and Examples.
 #' @param sqrt.p Logical argument (TRUE or FALSE) to specify if use square root of dissimilarity P matrix. Used in
@@ -169,6 +188,12 @@
 #' \item{obs.statistic}{Observed statistic, F value or r value to predefined function.}
 #' \item{p.site.shuffle}{The p value for the site shuffle null model.}
 #' \item{p.taxa.shuffle}{The p value for the taxa shuffle null model.}
+#' 
+#' @note \strong{IMPORTANT}: The sequence of species in the community data matrix
+#' MUST be the same as that in the phylogenetic distance matrix and, similarly, 
+#' the sequence of communities in the community data matrix MUST be the same as that in 
+#' the environmental data. See details and \code{\link{organize.pcps}}.
+#' 
 #' @author Vanderlei Julio Debastiani <vanderleidebastiani@@yahoo.com.br>
 #' @seealso \code{\link{matrix.p}}, \code{\link{pcps}}, \code{\link{procrustes}}, 
 #' \code{\link{glm}}, \code{\link{rda}}, \code{\link{adonis}}, \code{\link{adonis2}}, 
@@ -237,36 +262,62 @@
 #' anova(res$model, type = "sequential")
 #'  
 #' @export
-pcps.sig <- function (comm, phylodist, method = "bray", squareroot = TRUE, FUN, choices, runs = 999, parallel = NULL, newname = "pcps", ...) 
+pcps.sig <- function (comm, phylodist, envir, checkdata = TRUE, method = "bray", squareroot = TRUE, FUN, choices, runs = 999, parallel = NULL, newname = "pcps", ...) 
 {
-  RES <- list(call = match.call())
+  res <- list(call = match.call())
+  if (inherits(comm, "metacommunity.data")) {
+    if (!missing(phylodist)) {
+      stop("\n When you use an object of class metacommunity.data the argument phylodist must not be specified. \n")
+    }
+    phylodist <- comm$phylodist
+    envir <- comm$environmental
+    comm <- comm$community
+  }
+  list.warning <- list()
+  if(checkdata){
+    organize.temp <- organize.pcps(comm, phylodist = phylodist, envir = envir, check.comm = TRUE)
+    if(!is.null(organize.temp$stop)){
+      organize.temp$call <- match.call()
+      return(organize.temp)
+    }
+    list.warning <- organize.temp$list.warning
+    comm <- organize.temp$community
+    phylodist <- organize.temp$phylodist
+    envir <- organize.temp$environmental
+    # str(envir)
+    # envir nao conferido
+    
+  }
+  if(length(list.warning)>0){
+    res$list.warning <- list.warning
+  }
   res.pcps.null <- matrix.p.null(comm, phylodist, runs = runs, calcpcps = TRUE, adjpcps = TRUE, choices = choices, method = method, squareroot = squareroot)
   res.pcps.null <- mutate.names.matrix.p.null(res.pcps.null, "pcps", newname)
-  RES$PCPS.obs <- res.pcps.null$pcps.obs
-  statistic.obs <- sapply(list(res.pcps.null$pcps.obs[, choices, drop = FALSE]), FUN = FUN, simplify = FALSE, return.model = TRUE, ...)
-  RES$model <- statistic.obs[[1]]$mod.obs
-  RES$fun <- FUN
-  RES$obs.statistic <- statistic.obs[[1]]$statistic.obs
+  res$PCPS.obs <- res.pcps.null$pcps.obs
+  statistic.obs <- sapply(list(res.pcps.null$pcps.obs[, choices, drop = FALSE]), FUN = FUN, simplify = FALSE, envir = envir, return.model = TRUE, ...)
+  res$model <- statistic.obs[[1]]$mod.obs
+  res$fun <- FUN
+  res$obs.statistic <- statistic.obs[[1]]$statistic.obs
   newClusters <- FALSE
   if (is.numeric(parallel)) {
     parallel <- parallel::makeCluster(parallel, type = "PSOCK")
     newClusters <- TRUE
   }
   if (!inherits(parallel, "cluster")) {
-    statistic.null.site <- sapply(sapply(res.pcps.null$pcps.null.site, function(x, choices) x[,choices,drop = FALSE], simplify = FALSE, choices = choices), FUN = FUN, simplify = FALSE, ...)
-    statistic.null.taxa <- sapply(res.pcps.null$pcps.null.taxa.adj, FUN = FUN, simplify = FALSE, ...)
+    statistic.null.site <- sapply(sapply(res.pcps.null$pcps.null.site, function(x, choices) x[,choices,drop = FALSE], simplify = FALSE, choices = choices), FUN = FUN, simplify = FALSE, envir = envir, ...)
+    statistic.null.taxa <- sapply(res.pcps.null$pcps.null.taxa.adj, FUN = FUN, simplify = FALSE, envir = envir, ...)
   }
   else {
-    statistic.null.site <- parallel::parLapply(parallel, sapply(res.pcps.null$pcps.null.site, function(x, choices) x[,choices,drop = FALSE], simplify = FALSE, choices = choices), fun = FUN, ...)
-    statistic.null.taxa <- parallel::parLapply(parallel, res.pcps.null$pcps.null.taxa.adj, fun = FUN, ...)
+    statistic.null.site <- parallel::parLapply(parallel, sapply(res.pcps.null$pcps.null.site, function(x, choices) x[,choices,drop = FALSE], simplify = FALSE, choices = choices), fun = FUN, envir = envir, ...)
+    statistic.null.taxa <- parallel::parLapply(parallel, res.pcps.null$pcps.null.taxa.adj, fun = FUN, envir = envir, ...)
   }
   if (newClusters) {
     parallel::stopCluster(parallel)
   }
-  RES$statistic.null.site <- do.call("rbind", statistic.null.site)
-  RES$statistic.null.taxa <- do.call("rbind", statistic.null.taxa)
-  RES$p.site.shuffle <- as.vector(rbind((apply(sweep(RES$statistic.null.site, 2, RES$obs.statistic, ">="), 2, sum)+1)/(runs + 1)))
-  RES$p.taxa.shuffle <- as.vector(rbind((apply(sweep(RES$statistic.null.taxa, 2, RES$obs.statistic, ">="), 2, sum)+1)/(runs + 1)))
-  class(RES) <- "pcpssig"
-  return(RES)
+  res$statistic.null.site <- do.call("rbind", statistic.null.site)
+  res$statistic.null.taxa <- do.call("rbind", statistic.null.taxa)
+  res$p.site.shuffle <- as.vector(rbind((apply(sweep(res$statistic.null.site, 2, res$obs.statistic, ">="), 2, sum)+1)/(runs + 1)))
+  res$p.taxa.shuffle <- as.vector(rbind((apply(sweep(res$statistic.null.taxa, 2, res$obs.statistic, ">="), 2, sum)+1)/(runs + 1)))
+  class(res) <- "pcpssig"
+  return(res)
 }

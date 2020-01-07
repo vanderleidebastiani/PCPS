@@ -2,8 +2,13 @@
 #' @encoding UTF-8
 #' @export
 print.pcpssig <- function(x, ...){
-  cat("$call:\n")
+  cat("Call:\n")
   cat(deparse(x$call), "\n\n")
+  if(length(x$list.warning)>0){
+    cat("List of warning:\n")
+    namestemp <- SYNCSA::CollectNames(x$list.warning, prefix = "$list.warning$")
+    cat(unlist(namestemp, use.names = FALSE), sep = "\n")
+  }
   cat("$model:\n")
   print(x$model, ...)
   cat("\n$obs.statistic:\n")

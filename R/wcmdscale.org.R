@@ -26,7 +26,7 @@
 #' @export
 wcmdscale.org <- function(data, method, squareroot, eig, correlations, ...){
   res <- list()
-  if(class(data)=="dist"){
+  if(inherits(data, "dist")){
     data.dist <- data	
   } else {
     data.dist <- vegan::vegdist(data, method = method)

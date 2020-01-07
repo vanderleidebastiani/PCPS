@@ -10,15 +10,33 @@
 \alias{pcpc.curve.calc}
 \title{Curve of phylogenetic signal at metacommunity level}
 \usage{
-pcps.curve(comm, phylodist, trait, method = "bray", squareroot = TRUE,
-  ranks = TRUE, null.model.ts = FALSE, null.model.bm = FALSE, tree,
-  runs = 99, progressbar = FALSE, parallel = NULL)
+pcps.curve(
+  comm,
+  phylodist,
+  trait,
+  checkdata = TRUE,
+  method = "bray",
+  squareroot = TRUE,
+  ranks = TRUE,
+  null.model.ts = FALSE,
+  null.model.bm = FALSE,
+  tree,
+  runs = 99,
+  progressbar = FALSE,
+  parallel = NULL
+)
 
 pcpc.curve.calc(values, vectors, mt)
 
-\method{plot}{pcpscurve}(x, draw.model = c("none", "ts", "bm"),
-  type = "b", probs = c(0.025, 0.975), col = "black",
-  model.col = "black", ...)
+\method{plot}{pcpscurve}(
+  x,
+  draw.model = c("none", "ts", "bm"),
+  type = "b",
+  probs = c(0.025, 0.975),
+  col = "black",
+  model.col = "black",
+  ...
+)
 
 \method{print}{pcpscurve}(x, ...)
 
@@ -26,11 +44,18 @@ pcpc.curve.calc(values, vectors, mt)
 }
 \arguments{
 \item{comm}{Community data, with species as columns and sampling units as rows. This 
-matrix can contain either presence/absence or abundance data.}
+matrix can contain either presence/absence or abundance data.
+Alternatively comm can be an object of class metacommunity.data, an alternative
+way to set all data.frames/matrices. When you use the class metacommunity.data the arguments
+trait and phylodist must not be specified. See details.}
 
 \item{phylodist}{Matrix containing phylogenetic distances between species.}
 
 \item{trait}{Matrix data of species described by traits, with traits as columns and species as rows.}
+
+\item{checkdata}{Logical argument (TRUE or FALSE) to check if species
+sequence in the community data follows the same order as the one in the
+trait and in the phylodist matrices (Default checkdata = TRUE).}
 
 \item{method}{Dissimilarity index, as accepted by \code{\link{vegdist}} (Default dist = "bray").}
 
@@ -88,6 +113,17 @@ The function estimate the phylogenetic signal at metacommunity level and draws
 a representation curve.
 }
 \details{
+The sequence species show up in the community data matrix must be the 
+same as they show up in the phylogenetic distance matrix and in traits
+matrix. The function \code{\link{organize.pcps}} organizes the data, placing the matrices of 
+community and phylogenetic distance and trait in the same order. The function use of function 
+organize.pcps is not requered for run the functions, but is recommended. In this way 
+the arguments comm and phylodist can be specified them as normal arguments or by passing
+them with the object returned by the function \code{\link{organize.pcps}} using, in this
+case only the argument comm. Using the object returned by organize.pcps, the comm argument 
+is used as an alternative way of entering to set all data.frames/matrices, and therefore 
+the arguments phylodist and trait must not be specified.
+
 The PCPS are used, in a sequential manner, as predictors in a linear regression
 to model the trait averages across the metacommunity. The curve is drawn as the
 percentage of cumulative eigenvalues in the abscissa and as the determination 
@@ -97,6 +133,11 @@ Two null models are available. The first one (ts), the null curves are generated
 shuffling terminal tips across the phylogenetic tree, generates a set of random PCPS
 and recalculates the curves. The second (bm), the null curves are generated with 
 simulate traits evolving under Brownian motion model.
+}
+\note{
+\strong{IMPORTANT}: The sequence of species in the community data matrix
+MUST be the same as that in the phylogenetic distance matrix and in traits
+matrix. See details and \code{\link{organize.pcps}}.
 }
 \examples{
 

@@ -9,8 +9,16 @@
 \alias{print.summarypcoasig}
 \title{Significant dimensions in principal coordinate analysis}
 \usage{
-pcoa.sig(data, method = "gower", squareroot = FALSE, axis = 6,
-  n.start = NULL, by = 1, iterations = 1000, parallel = NULL)
+pcoa.sig(
+  data,
+  method = "gower",
+  squareroot = FALSE,
+  axis = 6,
+  n.start = NULL,
+  by = 1,
+  iterations = 1000,
+  parallel = NULL
+)
 
 \method{print}{pcoasig}(x, ...)
 

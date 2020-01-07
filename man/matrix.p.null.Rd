@@ -5,9 +5,16 @@
 \alias{matrix.p.null}
 \title{Auxiliar function to generate sets of null P matrix or null PCPS}
 \usage{
-matrix.p.null(comm, phylodist, runs = NULL, calcpcps = FALSE,
-  method = "bray", squareroot = TRUE, adjpcps = FALSE,
-  choices = NULL)
+matrix.p.null(
+  comm,
+  phylodist,
+  runs = NULL,
+  calcpcps = FALSE,
+  method = "bray",
+  squareroot = TRUE,
+  adjpcps = FALSE,
+  choices = NULL
+)
 }
 \arguments{
 \item{comm}{Community data, with species as columns and sampling units as rows. This matrix 

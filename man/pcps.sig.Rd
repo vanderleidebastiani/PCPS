@@ -20,20 +20,52 @@
 \alias{FUN.LME.sequential}
 \title{Association between phylogeny-weighted species composition and environmental predictors}
 \usage{
-matrix.p.sig(comm, phylodist, FUN, runs = 999, parallel = NULL,
-  newname = "pcps", ...)
+matrix.p.sig(
+  comm,
+  phylodist,
+  envir,
+  checkdata = TRUE,
+  FUN,
+  runs = 999,
+  parallel = NULL,
+  newname = "pcps",
+  ...
+)
 
-pcps.sig(comm, phylodist, method = "bray", squareroot = TRUE, FUN,
-  choices, runs = 999, parallel = NULL, newname = "pcps", ...)
+pcps.sig(
+  comm,
+  phylodist,
+  envir,
+  checkdata = TRUE,
+  method = "bray",
+  squareroot = TRUE,
+  FUN,
+  choices,
+  runs = 999,
+  parallel = NULL,
+  newname = "pcps",
+  ...
+)
 
-FUN.ADONIS(x, envir, method.p, sqrt.p = TRUE, formula,
-  return.model = FALSE)
+FUN.ADONIS(x, envir, method.p, sqrt.p = TRUE, formula, return.model = FALSE)
 
-FUN.ADONIS2.global(x, envir, method.p, formula, sqrt.p = TRUE,
-  return.model = FALSE)
+FUN.ADONIS2.global(
+  x,
+  envir,
+  method.p,
+  formula,
+  sqrt.p = TRUE,
+  return.model = FALSE
+)
 
-FUN.ADONIS2.margin(x, envir, method.p, formula, sqrt.p = TRUE,
-  return.model = FALSE)
+FUN.ADONIS2.margin(
+  x,
+  envir,
+  method.p,
+  formula,
+  sqrt.p = TRUE,
+  return.model = FALSE
+)
 
 FUN.GLM(x, envir, formula, ..., return.model = FALSE)
 
@@ -45,8 +77,15 @@ FUN.LME.marginal(x, envir, formula, ..., return.model = FALSE)
 
 FUN.LME.sequential(x, envir, formula, ..., return.model = FALSE)
 
-FUN.MANTEL(x, envir, method.p, method.envir, sqrt.p = TRUE, ...,
-  return.model = FALSE)
+FUN.MANTEL(
+  x,
+  envir,
+  method.p,
+  method.envir,
+  sqrt.p = TRUE,
+  ...,
+  return.model = FALSE
+)
 
 FUN.RDA(x, envir, return.model = FALSE)
 
@@ -54,9 +93,20 @@ FUN.RDA(x, envir, return.model = FALSE)
 }
 \arguments{
 \item{comm}{Community data, with species as columns and sampling units as rows. This matrix 
-can contain either presence/absence or abundance data.}
+can contain either presence/absence or abundance data.
+Alternatively comm can be an object of class metacommunity.data, an alternative
+way to set all data.frames/matrices. When you use the class metacommunity.data the arguments
+phylodist and envir must not be specified. See details.}
 
 \item{phylodist}{Matrix containing phylogenetic distances between species.}
+
+\item{envir}{A matrix or data.frame with environmental variables for each community, with variables as columns and 
+sampling units as rows. See Details and Examples.}
+
+\item{checkdata}{Logical argument (TRUE or FALSE) to check if species
+sequence in the community data follows the same order as the one in the phylodist matrix 
+and if sampling units in the community data follows the same order as the one in the 
+environmental data (Default checkdata = TRUE).}
 
 \item{FUN}{An object of class function to perform the analysis. See Details and Examples.}
 
@@ -76,9 +126,6 @@ dissimilarity index (Default squareroot = TRUE).}
 \item{choices}{Numeric vector to choose the PCPS used in analysis. See Details and Examples.}
 
 \item{x}{An object of class pcpssig or other object to apply the function passed by FUN. See Details.}
-
-\item{envir}{A matrix or data.frame with environmental variables for each community, with variables as columns and 
-sampling units as rows. See Details and Examples.}
 
 \item{method.p}{Resemblance index between communities based on P matrix, as accepted by \code{\link{vegdist}}. 
 Used in FUN.MANTEL, FUN.ADONIS, FUN.ADONIS2.global and FUN.ADONIS2.margin analysis. See Details and Examples.}
@@ -122,6 +169,18 @@ structure (\code{\link{pcps}}) and use a single axis for run a generalized linea
 model (GLM, \code{\link{glm}}), linear model using generalized least squares (GLS, \code{\link{gls}}),
 linear mixed-effects models (LME, \code{\link{lme}}) or use set of axis for run a distance-based redundancy
 analysis (db-RDA, \code{\link{rda}}).
+
+The sequence species show up in the community data matrix must be the 
+same as they show up in the phylogenetic distance matrix and, similarly, 
+the sequence of communities in the community data matrix must be the same as that in 
+the environmental data. The function \code{\link{organize.pcps}} organizes the data, placing the matrices of 
+community, phylogenetic distance and environmental data in the same order. The function use of function 
+organize.pcps is not requered for run the functions, but is recommended. In this way 
+the arguments comm and phylodist can be specified them as normal arguments or by passing
+them with the object returned by the function \code{\link{organize.pcps}} using, in this
+case only the argument comm. Using the object returned by organize.pcps, the comm argument 
+is used as an alternative way of entering to set all data.frames/matrices, and therefore 
+the arguments phylodist and envir must not be specified.
 
 The significance is obtained via two null models, one that shuffles sites across the
 environmental gradient and another that shuffles terminal tips (taxa) across the phylogenetic
@@ -235,6 +294,12 @@ as \emph{envir} will specify statistical analysis performed in matrix P ou PCPS.
     }
   return(res) 
 }}
+}
+\note{
+\strong{IMPORTANT}: The sequence of species in the community data matrix
+MUST be the same as that in the phylogenetic distance matrix and, similarly, 
+the sequence of communities in the community data matrix MUST be the same as that in 
+the environmental data. See details and \code{\link{organize.pcps}}.
 }
 \examples{
 data(flona)
