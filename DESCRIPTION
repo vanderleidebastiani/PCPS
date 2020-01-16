@@ -2,7 +2,7 @@ Package: PCPS
 Type: Package
 Title: Principal Coordinates of Phylogenetic Structure
 Version: 1.0.7
-Date: 2020-01-07
+Date: 2020-01-15
 Author: Vanderlei Julio Debastiani
 Maintainer: Vanderlei Julio Debastiani <vanderleidebastiani@yahoo.com.br>
 Depends:
@@ -23,10 +23,9 @@ Encoding: UTF-8
 RoxygenNote: 7.0.2
 Collate: 
     'matrix.p.sig.R'
+    'pcps.R'
     'pcps.sig.R'
     'FUN.ADONIS.R'
-    'FUN.ADONIS2.global.R'
-    'FUN.ADONIS2.margin.R'
     'FUN.GLM.R'
     'FUN.GLS.marginal.R'
     'FUN.GLS.sequential.R'
@@ -42,7 +41,6 @@ Collate:
     'pcoa.sig.R'
     'pcps.curve.R'
     'pcpc.curve.calc.R'
-    'pcps.R'
     'plot.pcps.R'
     'plot.pcpscurve.R'
     'print.pcoasig.R'

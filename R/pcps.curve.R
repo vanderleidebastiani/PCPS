@@ -25,6 +25,7 @@
 #' simulate traits evolving under Brownian motion model. 
 #'
 #' @encoding UTF-8
+#' @include pcps.R
 #' @importFrom ape rTraitCont
 #' @importFrom vegan vegdist
 #' @importFrom stats quantile
@@ -81,13 +82,15 @@
 #' @keywords PCPS
 #' @examples
 #' 
+#' \dontrun{
 #' data(flona)
 #' res<-pcps.curve(flona$community, flona$phylo, flona$trait[,1,drop = FALSE], 
 #'        null.model.ts = TRUE, runs = 9)
 #' res
 #' summary(res)
 #' plot(res, draw.model = "ts", type = "b", col = "red")
-#'
+#' }
+#' 
 #' @export
 pcps.curve <- function(comm, phylodist, trait, checkdata = TRUE, 
                        method = "bray", squareroot = TRUE, ranks = TRUE, 

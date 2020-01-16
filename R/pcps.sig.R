@@ -77,6 +77,53 @@
 #' whereas the function \emph{FUN.ADONIS2.margin} use as default \emph{by = margin} to assess the marginal effects of 
 #' the terms and return F and p value for each term. See more in \code{\link{adonis2}}.
 #' 
+#' The function \code{\link{adonis2}} evaluate the formula argument in the global environment, however CRAN 
+#' do not allow assignments to the global environment. As a temporary workaround, copy and run the lines below to make 
+#' the functions FUN.ADONIS2.global and FUN.ADONIS2.margin available.
+#' 
+#' \preformatted{
+#' 
+#' FUN.ADONIS2.global <- function(x, envir, method.p, formula, sqrt.p = TRUE, return.model = FALSE){
+#' p.dist <- vegan::vegdist(x, method = method.p)
+#' if(sqrt.p){
+#'   p.dist <- sqrt(p.dist)
+#' }
+#' assign("p.dist", p.dist, envir = globalenv())
+#' mod.obs <- vegan::adonis2(formula, data = data.frame(envir), permutations = 0, by = NULL, parallel = NULL)
+#' rm(p.dist, envir = globalenv())
+#' statistic.obs <- mod.obs$F[1]
+#' if(return.model){
+#'   res <- list()
+#'   res$mod.obs <- mod.obs
+#'   res$statistic.obs <- statistic.obs
+#' } else{
+#'   res <- statistic.obs
+#' }
+#' return(res)
+#' }
+#' 
+#' FUN.ADONIS2.margin <- function(x, envir, method.p, formula, sqrt.p = TRUE, return.model = FALSE){
+#' p.dist <- vegan::vegdist(x, method = method.p)
+#' if(sqrt.p){
+#'   p.dist <- sqrt(p.dist)
+#' }
+#' assign("p.dist", p.dist, envir = globalenv())
+#' mod.obs <- vegan::adonis2(formula, data = data.frame(envir), permutations = 2, by = "margin", parallel = NULL)
+#' rm(p.dist, envir = globalenv())
+#' nf <- length(mod.obs$F)-2
+#' statistic.obs <- mod.obs$F[seq_len(nf)]
+#' if(return.model){
+#'   res <- list()
+#'   res$mod.obs <- mod.obs
+#'   res$statistic.obs <- statistic.obs
+#' } else{
+#'   res <- statistic.obs
+#' }
+#' return(res)
+#' }
+#'
+#' }
+#' 
 #' \strong{FUN.GLM}
 #' 
 #' Generalized linear models that can be used in PCPS analysis. The argument \emph{formula} is specified, where the left hand side gives the PCPS used, 
@@ -141,6 +188,7 @@
 #' }}
 #' 
 #' @encoding UTF-8
+#' @include pcps.R
 #' @import SYNCSA
 #' @importFrom vegan procrustes rda adonis adonis2 mantel vegdist
 #' @importFrom parallel makeCluster parLapply stopCluster
@@ -205,6 +253,8 @@
 #' in metacommunity phylogenetics. Methods in Ecology and Evolution, 7(8), 937:946.
 #' @keywords PCPS
 #' @examples
+#' 
+#' \dontrun{
 #' data(flona)
 #' 
 #' # MANTEL
@@ -260,7 +310,8 @@
 #'          envir = flona$environment, random = ~1|temp, choices = 1, runs = 99)
 #' res
 #' anova(res$model, type = "sequential")
-#'  
+#' }
+#' 
 #' @export
 pcps.sig <- function (comm, phylodist, envir, checkdata = TRUE, method = "bray", squareroot = TRUE, FUN, choices, runs = 999, parallel = NULL, newname = "pcps", ...) 
 {

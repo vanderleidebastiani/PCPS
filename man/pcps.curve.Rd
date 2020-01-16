@@ -141,12 +141,14 @@ matrix. See details and \code{\link{organize.pcps}}.
 }
 \examples{
 
+\dontrun{
 data(flona)
 res<-pcps.curve(flona$community, flona$phylo, flona$trait[,1,drop = FALSE], 
        null.model.ts = TRUE, runs = 9)
 res
 summary(res)
 plot(res, draw.model = "ts", type = "b", col = "red")
+}
 
 }
 \references{

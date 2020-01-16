@@ -6,12 +6,12 @@
 \title{Internal function}
 \usage{
 select.pcpsmethod(
-  method = c("mantel", "adonis", "adonis2.global", "adonis2.margin", "glm", "rda",
-    "gls.marginal", "gls.sequential", "lme.marginal", "lme.sequential", "none")
+  method = c("mantel", "adonis", "glm", "rda", "gls.marginal", "gls.sequential",
+    "lme.marginal", "lme.sequential", "none")
 )
 }
 \arguments{
-\item{method}{A predefined method/function available in PCPS package, partial match to "mantel", "adonis", "adonis2.global", "adonis2.margin", "glm", "rda", "gls.marginal", "gls.sequential", "lme.marginal", "lme.sequential" and "none".}
+\item{method}{A predefined method/function available in PCPS package, partial match to "mantel", "adonis", "glm", "rda", "gls.marginal", "gls.sequential", "lme.marginal", "lme.sequential" and "none".}
 }
 \description{
 Internal function to select a predefined method/function available in this package.

@@ -88,10 +88,12 @@ If the higher dimension is significant, then all lower dimensions will also be s
 }
 \examples{
 
+\dontrun{
 data(flona)
 res<-pcoa.sig(flona$community, method = "bray", squareroot = TRUE, axis = 6, iterations = 100)
 res
 summary(res)$scores
+}
 
 }
 \references{

@@ -5,6 +5,7 @@
 #' permuted matrices.
 #' 
 #' @encoding UTF-8
+#' @include pcps.R
 #' @import SYNCSA
 #' @importFrom stats fitted
 #' @aliases matrix.p.null

@@ -53,12 +53,14 @@
 #' @references Pillar, V.D. (1999). The bootstrapped ordination reexamined. Journal of Vegetation Science 10, 895-902.
 #' @keywords PCPS
 #' @examples
-#'
+#' 
+#' \dontrun{
 #' data(flona)
 #' res<-pcoa.sig(flona$community, method = "bray", squareroot = TRUE, axis = 6, iterations = 100)
 #' res
 #' summary(res)$scores
-#'
+#' }
+#' 
 #' @export
 pcoa.sig<-function (data, method = "gower", squareroot = FALSE, axis = 6, n.start = NULL, by = 1, iterations = 1000, parallel = NULL){
 	RES <- list(call = match.call())

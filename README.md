@@ -9,7 +9,7 @@ R Package - PCPS - Principal Coordinates of Phylogenetic Structure
 
 ## Previous version
 
-PCPS 1.0.6 available in [`CRAN`](https://cran.r-project.org/web/packages/PCPS/index.html)
+PCPS 1.0.7 available in [`CRAN`](https://cran.r-project.org/web/packages/PCPS/index.html)
 
 [![CRAN version](http://www.r-pkg.org/badges/version/PCPS)](https://cran.r-project.org/web/packages/PCPS/index.html) [![](http://cranlogs.r-pkg.org/badges/grand-total/PCPS)](https://cran.r-project.org/web/packages/PCPS/index.html)
 
