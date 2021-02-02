@@ -20,12 +20,12 @@ select.pcpsmethod <- function(method = c("mantel", "adonis", "glm", "rda", "gls.
     if(method==2){
       FUN <- FUN.ADONIS
     }
-    # if(method==3){
-    #   FUN <- FUN.ADONIS2.global
-    # }
-    # if(method==4){
-    #   FUN <- FUN.ADONIS2.margin
-    # }
+    if(method==3){
+      FUN <- FUN.ADONIS2.global
+    }
+    if(method==4){
+      FUN <- FUN.ADONIS2.margin
+    }
     if(method==5){
       FUN <- FUN.GLM
     }
